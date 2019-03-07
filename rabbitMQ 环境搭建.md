@@ -25,12 +25,10 @@ sudo apt-get install rabbitmq-server
 
 ## 启用WEB UI
 
-启用管理插件:
+启用管理插件和STOMP插件:
 
 ```sh
-sudo rabbitmq-plugins enable rabbitmq_management
-# 启用STOMP插件
-sudo rabbitmq-plugins enable rabbitmq_stomp
+sudo rabbitmq-plugins enable rabbitmq_management rabbitmq_stomp
 # 重启服务器
 sudo systemctl restart rabbitmq-server
 ```
