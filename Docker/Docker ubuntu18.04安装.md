@@ -7,6 +7,7 @@
 
 ```sh
 sudo apt-get install apt-transport-https ca-certificates curl software-properties-common
+
 ```
 
 第二步：添加Docker的官方GPG密钥：
@@ -40,8 +41,27 @@ sudo docker run hello-world
 如果执行时不想使用sudo命令，可以进行设置用户组，并将当前用户增加到该组中
 
 ```sh
-sudo groupadd docker
+# sudo groupadd docker
 sudo usermod -aG docker $USER
 # 注销一下，再执行以下命令
 docker run hello-world
 ```
+
+## docker 命令
+
+```sh
+# 启动
+systemctl start docker
+# 守护进程重启
+sudo systemctl daemon-reload
+# 重启docker服务
+systemctl restart  docker
+# 重启docker服务
+sudo service docker restart
+#关闭docker
+service docker stop
+#关闭docker
+systemctl stop docker
+```
+
+## [docker文档](https://yeasy.gitbooks.io/docker_practice/introduction/)
