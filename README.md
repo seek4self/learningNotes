@@ -11,3 +11,5 @@
 [google search tips](https://www.lifehack.org/articles/technology/20-tips-use-google-search-efficiently.html)
 
 [科学上网](https://www.jeffjade.com/2017/05/01/122-how-to-better-use-google_chrome/#more)
+
+[emoji for md](https://www.webfx.com/tools/emoji-cheat-sheet/)
