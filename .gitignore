@@ -1,0 +1,7 @@
+#tmp file
+*.*~
+#makefile
+Makefile
+.vscode/
+*.autosave
+

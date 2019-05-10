@@ -44,3 +44,7 @@ curl -XGET http://192.168.1.1:5000/v2/[image_name]/tags/list
 
 - `apt-get update && apt-get install -y`必须同时在一个RUN任务里，以确保每次安装的都是包的最新的版本
 - 结尾使用`&& rm -rf /var/lib/apt/lists/*`清除 apt 缓存
+
+## 修改ubuntu时区
+
+ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && echo Asia/Shanghai> /etc/timezone
