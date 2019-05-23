@@ -62,6 +62,8 @@ sudo service docker restart
 service docker stop
 #关闭docker
 systemctl stop docker
+# 查看docker状态
+systemctl status docker
 ```
 
 ## [docker文档](https://yeasy.gitbooks.io/docker_practice/introduction/)

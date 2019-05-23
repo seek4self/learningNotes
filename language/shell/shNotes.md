@@ -66,3 +66,23 @@ Shell本身的文件名
 -rw-rw-rw- (666)  所有用户都有文件读、写权限。  
 -rwxrwxrwx (777)  所有用户都有读、写、执行权限。
 ```
+
+## sed 用法
+
+- -i 直接修改文件
+
+```sh
+# 在第4行后插入test
+sed -i '4 atest' a.txt
+# 在第5行前插入test
+sed -i '5 itest' a.txt
+# 在bbbb行后添加xiaowu
+sed -i '/bbbb/a\xiaowu' file
+```
+
+## sleep
+
+sleep 1 睡眠1秒
+sleep 1s 睡眠1秒
+sleep 1m 睡眠1分
+sleep 1h 睡眠1小时

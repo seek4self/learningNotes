@@ -25,3 +25,16 @@ ssh-keygen -t rsa -C '123456789@qq.com'
 # 测试是否成功
 ssh -T git@github.com
 ```
+
+## delete branch
+
+在确保要删除的分支已经合并的情况下再删除
+
+```sh
+# 删除远程分支
+git push origin --delete <branchName>
+# 删除本地分支
+git branch -d <branchName>
+# 强制删除本地分支
+git branch -D <branchName>
+```
