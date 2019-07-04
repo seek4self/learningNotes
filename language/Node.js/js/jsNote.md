@@ -35,3 +35,13 @@ ES6 的模块自动采用严格模式，不管你有没有在模块头部加上"
 ## modules
 
 - [log4js基本配置](https://www.shenyujie.cc/2018/05/25/log4js-basic/)
+
+## 生成6位随机数验证码
+
+```js
+console.log(Math.random().toString().slice(-6));
+```
+
+Math.random方法 用于生成0~1之间的随机数
+toString方法 用于将生成的随机数转换成字符串
+slice方法 用于截取转换后的字符串，传入参数为负数时代表从字符串尾部开始朝头部方向截取
