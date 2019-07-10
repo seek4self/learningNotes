@@ -4,7 +4,7 @@
 
 - 主题
   - One Dark Pro
-  - VSCode Great Icons
+  - VSCode Icons
 - koroFileHeader
 - Code Runner
 - Beautify

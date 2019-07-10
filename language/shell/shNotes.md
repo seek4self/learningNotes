@@ -69,15 +69,21 @@ Shell本身的文件名
 
 ## sed 用法
 
-- -i 直接修改文件
+- 参数
+  - `-i` 直接修改文件
+- 条件
+  - `a\` 下一行追加
+  - `i\` 上一行追加
 
 ```sh
 # 在第4行后插入test
-sed -i '4 atest' a.txt
+sed -i '4a\test' a.txt
 # 在第5行前插入test
-sed -i '5 itest' a.txt
+sed -i '5i\test' a.txt
 # 在bbbb行后添加xiaowu
 sed -i '/bbbb/a\xiaowu' file
+# 在文件末尾添加一行
+sed -i '$a\text' flie
 ```
 
 ## sleep
