@@ -17,3 +17,16 @@ mongoose 有些接口被弃用或不建议使用，Node.js驱动时会发出`Dep
 
 - Model.findById()
   - 通过`_id`字段查找单个文档。`findById(id)`差不多相当于`findOne({ _id: id })`。如果要按文档查询`_id`，请使用`findById()`而不是`findOne()`。
+
+## 替换_id
+
+```js
+toJSON: {
+    // virtuals: true,
+    transform: (doc, ret, options) => {
+    // transfrom _id to id
+    ret.id = ret._id;
+    delete ret._id;
+    return ret;
+}}
+```

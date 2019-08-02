@@ -45,3 +45,7 @@ console.log(Math.random().toString().slice(-6));
 Math.random方法 用于生成0~1之间的随机数
 toString方法 用于将生成的随机数转换成字符串
 slice方法 用于截取转换后的字符串，传入参数为负数时代表从字符串尾部开始朝头部方向截取
+
+## exports
+
+[exports的用法：Node.js模块的接口设计模式](https://gywbd.github.io/posts/2014/11/using-exports-nodejs-interface-design-pattern.html)
