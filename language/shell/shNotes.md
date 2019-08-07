@@ -92,3 +92,9 @@ sleep 1 睡眠1秒
 sleep 1s 睡眠1秒
 sleep 1m 睡眠1分
 sleep 1h 睡眠1小时
+
+## 执行sh ./xxx.sh出现：“Syntax error: “(” unexpected”的解决方法
+
+代码对于标准bash而言没有错，因为Ubuntu/Debian为了加快开机速度，用dash代替了传统的bash，是dash在捣鬼，解决方法就是取消dash。
+
+sudo dpkg-reconfigure dash

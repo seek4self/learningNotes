@@ -54,4 +54,13 @@ curl -XGET http://192.168.1.1:5000/v2/[image_name]/tags/list
 
 ## 修改ubuntu时区
 
+```sh
 ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && echo Asia/Shanghai> /etc/timezone
+```
+
+## 打包docker镜像
+
+```sh
+docker save -o imageName.tar.gz image_name
+docker load --input imageName.tar.gz
+```
