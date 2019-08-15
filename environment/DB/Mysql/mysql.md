@@ -2,7 +2,7 @@
 
 ## 自定义函数
 
-- 递归查询函数
+- [递归查询函数](https://blog.csdn.net/acmain_chm/article/details/4142971)
 
 ```sql
 DELIMITER $$ --定界符
