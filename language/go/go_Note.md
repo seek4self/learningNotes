@@ -32,6 +32,17 @@ go version
 # =>：go version go1.12.7 linux/amd64
 ```
 
+### go mod [设置代理](https://shockerli.net/post/go-get-golang-org-x-solution/)
+
+`go get golang.org/x` 需要访问外网（翻墙），可以通过设置代理的方式解决
+开启`go mod` : 设置环境变量`export GO111MODULE=on`
+
+- 第三方代理  
+  export GOPROXY=https://goproxy.io
+
+- shadowsocks代理  
+  export all_proxy=http://proxyAddress:port
+
 ### GOPATH
 
 go 命令依赖一个重要的环境变量：$GOPATH  
