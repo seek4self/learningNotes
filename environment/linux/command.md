@@ -18,3 +18,10 @@ Linux ubuntu 4.15.0-48-generic \#51-Ubuntu SMP Wed Apr 3 08:28:49 UTC 2019 x86_6
 ```sh
 netstat -nap | grep 端口号
 ```
+
+## 修改文件夹用户组
+
+```sh
+chown [-R] 账号名称 文件或目录
+chown [-R] 账号名称:用户组名称 文件或目录
+```

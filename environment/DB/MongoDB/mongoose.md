@@ -35,4 +35,7 @@ toJSON: {
 
 [Mongoose Populate 基本使用](https://blog.csdn.net/Elliott_Yoho/article/details/53537147)
 
+## 数组添加元素
 
+$addToSet：向数组中添加元素，若数组本身含有该元素，则不添加，否则，添加，这样就避免了数组中的元素重复现象；
+$push：向数组尾部添加元素，但它不管数组中有没有该元素，都会添加。
