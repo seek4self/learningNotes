@@ -49,3 +49,12 @@ slice方法 用于截取转换后的字符串，传入参数为负数时代表�
 ## exports
 
 [exports的用法：Node.js模块的接口设计模式](https://gywbd.github.io/posts/2014/11/using-exports-nodejs-interface-design-pattern.html)
+
+## 或赋值
+
+```js
+const a = 1
+const b = 0
+const c = b || a
+console.log(c)  // 1
+```

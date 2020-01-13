@@ -2,7 +2,7 @@ const obj = {
     asd: "ds",
     zxc: "sdf",
     sd: "sdf"
-    };
+};
 delete obj.asd
 console.log(obj);
 
@@ -11,13 +11,13 @@ console.log(obj);
 console.log(Math.random().toString().slice(-6));
 
 function hello() {
-    let faild;
+    let field;
     this.set = (name) => {
-        faild = name;
+        field = name;
     }
 
     this.get = () => {
-        return faild
+        return field
     }
 }
 

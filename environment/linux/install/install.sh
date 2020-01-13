@@ -17,5 +17,5 @@ sudo apt install mysql-client -y
 sudo apt install mysql-server -y
 sudo apt install git -y
 git config --global user.name "mazhuang"
-git config --global user.email "z.ma@bmi-tech.cn"
+git config --global user.email "1234.mail"
 git config --global core.editor vim
