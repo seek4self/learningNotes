@@ -38,10 +38,10 @@ go version
 开启`go mod` : 设置环境变量`export GO111MODULE=on`
 
 - 第三方代理  
-  export GOPROXY=https://goproxy.io
+  `export GOPROXY=https://goproxy.io`
 
 - shadowsocks代理  
-  export all_proxy=http://proxyAddress:port
+  `export all_proxy=http://proxyAddress:port`
 
 ### GOPATH
 
