@@ -1,17 +1,30 @@
 # learningNotes
 
-## just do it
+路漫漫其修远兮
 
-## 书中自有颜如玉
+## Environment
 
-## 人生苦长，无需惊慌
+- DataBase
+  - [mongodb](./environment/DB/MongoDB/mongdb.md)
+  - mysql
+- Redis
+- [Docker](./environment/Docker/Docker%20ubuntu18.04安装.md)
+  - [docker-nvidia](./environment/Docker/doker-nvidia.md)
+  - [Environment deployment docker script](environment/docker-deploy.md)
+- [rabbitMQ](./environment/MQ/rabbitMQ%20环境搭建.md)
 
-## 路漫漫其修远兮
+## Tools
 
-[google search tips](https://www.lifehack.org/articles/technology/20-tips-use-google-search-efficiently.html)
+- [git](environment/tools/git/git.md)
+- [tcpdump](environment/tools/tcpdump/tcpdump.md)
+- [vim](environment/tools/vim/vim.md)
+- [vscode](environment/tools/vscode/vscode.md)
 
-[科学上网](https://www.jeffjade.com/2017/05/01/122-how-to-better-use-google_chrome/#more)
+## Notes
 
-[emoji for md](https://www.webfx.com/tools/emoji-cheat-sheet/)
+## some links
 
-[云免费 mongoDB](https://www.mongodb.com/cloud/atlas)
+- [google search tips](https://www.lifehack.org/articles/technology/20-tips-use-google-search-efficiently.html)  
+- [科学上网](https://www.jeffjade.com/2017/05/01/122-how-to-better-use-google_chrome/#more)
+- [emoji for md](https://www.webfx.com/tools/emoji-cheat-sheet/)
+- [云免费 mongoDB](https://www.mongodb.com/cloud/atlas)
