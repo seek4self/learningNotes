@@ -37,3 +37,26 @@ source my_env/bin/activate
 # 退出环境
 deactivate
 ```
+
+## pip 换源
+
+python 默认使用国外pypi源，下载容易超时，可以更换国内源：
+
+阿里云 http://mirrors.aliyun.com/pypi/simple/
+中国科技大学 https://pypi.mirrors.ustc.edu.cn/simple/
+豆瓣(douban) http://pypi.douban.com/simple/
+清华大学 https://pypi.tuna.tsinghua.edu.cn/simple/
+中国科学技术大学 http://pypi.mirrors.ustc.edu.cn/simple/
+
+```sh
+# 新建pip配置文件
+mkdir ~/.pip
+vim ~/.pip/pip.conf
+
+    # [global]
+    # 这个pypi源自己定义[install]
+    # index-url = https://pypi.tuna.tsinghua.edu.cn/simple/ 
+    # 这个也是根据pypi源自己定义
+    # trusted-host=pypi.tuna.tsinghua.edu.cn
+  
+```
