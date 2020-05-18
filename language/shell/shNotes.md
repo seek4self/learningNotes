@@ -86,6 +86,13 @@ sed -i '/bbbb/a\xiaowu' file
 sed -i '$a\text' flie
 ```
 
+- 用户自定义分隔符
+  - 当替换内容中包含`/`时，于`sed`语法冲突，可以自定义分隔符，比如 `$`, `%`, `@`, `?`, `#`等
+
+```sh
+echo aabbccdd | sed 's#aa#bb#g' | sed 's?bb?cc?g' | sed 's@cc@dd@g' | sed 's%dd%ee%g'
+```
+
 ## sleep
 
 ```sh

@@ -58,6 +58,12 @@ curl -XGET http://192.168.1.1:5000/v2/[image_name]/tags/list
 ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && echo Asia/Shanghai> /etc/timezone
 ```
 
+## 更改国内源
+
+```sh
+sed -i s@/archive.ubuntu.com/@/mirrors.aliyun.com/@g /etc/apt/sources.list
+```
+
 ## 打包docker镜像
 
 ```sh
