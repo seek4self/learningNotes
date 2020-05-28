@@ -88,6 +88,7 @@ sed -i '$a\text' flie
 
 - 用户自定义分隔符
   - 当替换内容中包含`/`时，于`sed`语法冲突，可以自定义分隔符，比如 `$`, `%`, `@`, `?`, `#`等
+  - 自定义分隔符语法： `s`的后面紧跟自定义的分隔符即可
 
 ```sh
 echo aabbccdd | sed 's#aa#bb#g' | sed 's?bb?cc?g' | sed 's@cc@dd@g' | sed 's%dd%ee%g'
