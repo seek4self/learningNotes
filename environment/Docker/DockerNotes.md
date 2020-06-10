@@ -1,5 +1,7 @@
 # DockerNotes
 
+Docker解决了运行环境和配置问题软件容器，方便做持续集成并有助于整体发布的容器虚拟化技术
+
 ## docker commit
 
 docker commit :从容器创建一个新的镜像。
@@ -69,4 +71,18 @@ sed -i s@/archive.ubuntu.com/@/mirrors.aliyun.com/@g /etc/apt/sources.list
 ```sh
 docker save -o imageName.tar.gz image_name
 docker load --input imageName.tar.gz
+```
+
+## dockerfile 优化
+
+安装完成后清理缓存,减少镜像大小， 确保所有的清理语句在**同一个部分**运行
+
+```dockerfile
+# ubuntu
+# 官方Debian和Ubuntu映像会自动运行apt-get clean，因此不需要显式调用。
+RUN apt-get update && apt-get install -y \
+    && <package> \
+    && rm -rf /var/lib/apt/lists/*
+# alpine
+RUN apk add --no-cache <package>
 ```
