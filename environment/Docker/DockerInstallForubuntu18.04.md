@@ -21,7 +21,8 @@ sudo apt-key fingerprint 0EBFCD88
 第三步：可选设定稳定存储库
 
 ```sh
-sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu  xenial  stable"
+# lsb_release 返回Ubuntu发行版的名称
+sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu  $(lsb_release -cs)  stable"
 ```
 
 第四步，更新apt资源包，并进行安装docker-ce
