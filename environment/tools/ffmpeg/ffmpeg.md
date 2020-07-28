@@ -14,4 +14,6 @@ avformat_write_header()：写文件头（对于某些没有文件头的封装格
 avcodec_encode_video2()：编码一帧视频。即将AVFrame（存储YUV像素数据）编码为AVPacket（存储H.264等格式的码流数据）。  
 av_write_frame()：将编码后的视频码流写入文件。  
 flush_encoder()：输入的像素数据读取完成后调用此函数。用于输出编码器中剩余的AVPacket。  
-av_write_trailer()：写文件尾（对于某些没有文件头的封装格式，不需要此函数。比如说MPEG2TS）。  
+av_write_trailer()：写文件尾（对于某些没有文件头的封装格式，不需要此函数。比如说MPEG2TS）。
+
+## 命令行

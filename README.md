@@ -4,10 +4,7 @@
 
 ## Environment
 
-- DataBase
-  - [mongodb](./environment/DB/MongoDB/mongdb.md)
-  - mysql
-- Redis
+- [DataBase](./environment/DB/README.md)
 - [Docker](./environment/Docker/DockerInstallForubuntu18.04.md)
   - [docker-nvidia](./environment/Docker/doker-nvidia.md)
   - [Environment deployment docker script](environment/docker-deploy.md)
@@ -19,7 +16,7 @@
 
 > Kubernetes 开源的容器管理平台
 
-- [MesOS](./Architecture/Mesos/mesos.md)
+- [MesOS](./Architecture/MesOS/mesos.md)
 
 > 开源的资源管理调度集群系统
 

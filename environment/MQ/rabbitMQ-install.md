@@ -64,17 +64,3 @@ sudo rabbitmqctl  set_permissions -p / admin '.*' '.*' '.*'
 # 查看权限
 sudo rabbitmqctl list_user_permissions admin
 ```
-
-docker run -d -p 10022:10022 \
-    -v /opt/EasyGBS/logs:/opt/EasyGBS/logs \
-    -v /opt/coredump:/opt/coredump \
-    -e WAN_IP=192.168.1.118 \
-    -e MQ_HOST=192.168.1.118 \
-    -e MYSQL_IP=192.168.1.74 \
-    -e DATABASE_NAME=bmi_gbs \
-    -e DMS_IP=192.168.1.74 \
-    -e REDIS_IP=192.168.1.118 \
-    --name vdmsgbs \
-    dockerhub.bmi:5000/vdmsgbs:master
-
-    docker run --name vdmsdarwin  -v /opt/EasyDarwin/logs:/opt/EasyDarwin/logs  -v /opt/coredump:/opt/coredump -e WAN_IP=192.168.1.118 -e REDIS_IP=192.168.1.118 -e MQ_IP=192.168.1.118 -e CLOUD_NODE_ID=123123 -p 10008:10008 -d dockerhub.bmi:5000/vdmsdarwin:sendmp2cms

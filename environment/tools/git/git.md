@@ -26,6 +26,22 @@ ssh-keygen -t rsa -C '123456789@qq.com'
 ssh -T git@github.com
 ```
 
+## 同时配置github和gitlab
+
+在~/.ssh下创建`config`文件 `vim ~/.shh/config`
+
+```conf
+# gitlab
+Host gitlab.xxx.com # (gitlab的host地址)
+    HostName gitlab.xxx.com
+    IdentityFile ~/.ssh/id_rsa
+
+# github
+Host github.com # (github的host地址)
+    HostName github.com
+    IdentityFile ~/.ssh/id_rsa_github
+```
+
 ## delete branch
 
 在确保要删除的分支已经合并的情况下再删除

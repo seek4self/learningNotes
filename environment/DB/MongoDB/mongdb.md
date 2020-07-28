@@ -1,5 +1,14 @@
 # MongoDB
 
+- [相关操作](#相关操作)
+- [卸载 MongoDB](#卸载-mongodb)
+- [开启远程访问](#开启远程访问)
+- [故障问题](#故障问题)
+- [应用场景](#应用场景)
+  - [适用场景](#适用场景)
+  - [不适用场景](#不适用场景)
+- [mongodb性能优化](#mongodb性能优化)
+
 环境搭建[官方文档](https://docs.mongodb.com/manual/tutorial/install-mongodb-on-ubuntu/#install-community-ubuntu-pkg)
 
 ## 相关操作
