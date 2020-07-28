@@ -73,6 +73,8 @@ kubectl get namespace -L istio-injection
 
 ### istio-init
 
+数据面的每个Pod会被注入一个名为`istio-init` 的initContainer, initContrainer是K8S提供的机制，用于在Pod中执行一些初始化任务.在Initialcontainer执行完毕并退出后，才会启动Pod中的其它container.
+
 ### envoy-proxy
 
 ## 可观察性

@@ -77,13 +77,9 @@ Service Mesh有如下几个特点：
 
 [Istio与Linkerd与Consul：服务网格的比较](https://logz.io/blog/istio-linkerd-envoy-comparison-service-meshes/)
 
-consul(V >= 1.2) 添加了 `Connect` 基于 k8s 为其提供了服务发现、应用安全、可观察性等功能，
-
-istio 拥有 consul 所有的功能，还有更多的流量管理功能（断路器，故障注入，重试，超时，路由规则，虚拟服务器，负载平衡等），
-
-两者均采用 sidecar 模式，该模式将运行在每个容器内的单独容器中的代理放置。该Sidecar容器从应用程序接收数据并将其发送到应用程序。
-consul代理可配置，istio 绑定了 Envoy
-
-Istio的网络性能不如consul, istio部署在单台主机上，consul可以分布式部署，
-
-两者均有可视化工具，istio 有额外的专用的 Kiali ,可以查看网络拓扑图及流量信息
+- consul(V >= 1.2) 添加了 `Connect` 基于 k8s 为其提供了服务发现、应用安全、可观察性等功能，
+- istio 拥有 consul 所有的功能，还有更多的流量管理功能（断路器，故障注入，重试，超时，路由规则，虚拟服务器，负载平衡等），
+- 两者均采用 sidecar 模式，该模式将运行在每个容器内的单独容器中的代理放置。该Sidecar容器从应用程序接收数据并将其发送到应用程序。  
+  consul代理可配置，istio 绑定了 Envoy
+- Istio的网络性能不如consul, istio部署在单台主机上，consul可以分布式部署，
+- 两者均有可视化工具，istio 有额外的专用的 Kiali ,可以查看网络拓扑图及流量信息
