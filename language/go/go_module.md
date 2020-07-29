@@ -33,3 +33,15 @@ GO111MODULE 有三个值：`off`, `on`和`auto`（默认值）。
     添加依赖后会自动下载相应的依赖文件
 
 2. 可以使用命令 `go list -m -u all` 来检查可以升级的package，使用`go get -u need-upgrade-package` 升级后会将新的依赖版本更新到go.mod * 也可以使用 `go get -u` 升级所有依赖
+
+## GO获取gitlab私有仓库的包
+
+配置git
+
+```sh
+# 配置git
+git config --global url.ssh://git@gitlab.com/.insteadOf "https://gitlab.com/"
+# 拉取代码
+go get -u gitlab.com/groupName/projectName.git
+```
+

@@ -85,38 +85,12 @@ go get -u -v github.com/newhook/go-symbols
 go get -v -u github.com/peterh/liner github.com/derekparker/delve/cmd/dlv
 ```
 
-## 变量声明
+## Docker 部署 go应用
 
-```go
-// 声明a，b都是整型指针
-var a,b *int;
-// 声明后 int 为 0，float 为 0.0，bool 为 false，string 为空字符串，指针为 nil
+编译时使用go环境镜像，先进行交叉编译 `CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build`，编译完成后使用 `alpine`镜像打包
 
-//简短变量声明语句也可以用来声明和初始化一组变量：
-//只能在函数内部使用
-i,j := 0,1;
-```
+其中：
 
-`var`和`:=`不能同时使用
-
-## 变量逃逸
-
-Go 语言将变量分配内存的过程整合到编译器中，命名为“变量逃逸分析”。这个技术由编译器分析代码的特征和代码生命期，决定应该如何堆还是栈进行内存分配，因此我们不需要将精力放在内存应该分配在栈还是堆上的问题。  
-编译器觉得变量应该分配在堆和栈上的原则是：
-
-- 变量是否被取地址。
-- 变量是否发生逃逸。
-
-## package
-
-```go
-package go
-```
-
-包的特性如下：
-
-- 一个目录下的同级文件归属一个包。
-- 包名可以与其目录不同名。
-- 包名为 main 的包为应用程序的入口包，编译源码没有 main 包时，将无法编译输出可执行的文件
-
- 包内标识符首字母大写，外部就可以访问
+- `CGO_ENABLED`: 禁用CGO工具
+- `GOOS=linux`：编译到Linux
+- `GOARCH=amd64` ：64位应用，若系统为32位。则`GOARCH=386`

@@ -19,9 +19,9 @@ Istio 为可扩展性而设计，可以满足不同的部署需求。
 
 Istio 以统一的方式提供了许多跨服务网络的关键功能：
 
-- 流量管理
-- 安全
-- 可观察性
+- 流量管理: 可以指定不同的规则，使用 Envoy 代理将流量转发到相关服务
+- 安全： 自签发证书，用于服务间通信认证
+- 可观察性：自带不同可视化插件，可以观察实时流量、日志、采集指标、请求追踪等
 
 ## 流量管理
 
@@ -77,6 +77,8 @@ kubectl get namespace -L istio-injection
 
 ### envoy-proxy
 
+拦截应用服务的请求，并转发到对应的服务
+
 ## 可观察性
 
 ### kiali
@@ -91,7 +93,7 @@ kubectl get namespace -L istio-injection
 
 使用istioctl 启动 kiali 可视化界面报错
 
-```err
+```sh
 $ istioctl dashboard kiali
 http://localhost:44190/kiali
 2020-07-09T06:25:21.093098Z error an error occurred forwarding 44190 -> 20001:e4658a0de6d1, uid : unable to do port forwarding: socat not found
@@ -99,6 +101,10 @@ http://localhost:44190/kiali
 
 系统中缺少 `socat` 程序，通过 `sudo apt-get install socat -y` 安装解决， socat 是 `Socket CAT` 的简称，主要用于在两个数据流之间建立通道，且支持众多协议和链接方式
 
-## VirtualService
+### 访问
 
-HTTP route cannot contain both route and redirect
+istioctl 工具提供了可视化界面端口映射功能，以`kiali`为例
+
+使用命令`istioctl dashboard kiali`启动时，默认监听的 ip 是`127.0.0.1`， 若要在服务器以外访问，需要添加参数`istioctl dashboard kiali --address 0.0.0.0 &`启动并后台运行
+
+若不用这种方法，可以使用 k8s 的端口转发 `kubectl -n istio-system port-forward --address 0.0.0.0 <pod-name> &`
