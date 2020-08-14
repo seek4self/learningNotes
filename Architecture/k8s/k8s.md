@@ -27,6 +27,8 @@
 - [配置管理](#配置管理)
   - [ConfigMap配置热更新](#configmap配置热更新)
   - [服务配置热更新](#服务配置热更新)
+- [数据卷](#数据卷)
+  - [PV/PVC](#pvpvc)
 
 Kubernetes是一个开源的，用于管理云平台中多个主机上的容器化的应用，Kubernetes的目标是让部署容器化的应用简单并且高效（powerful）,Kubernetes提供了应用部署，规划，更新，维护的一种机制。
 
@@ -447,3 +449,20 @@ ENV 是在容器启动的时候注入的，启动之后 kubernetes 就不会再�
 - 方案一：通过 ConfigMap 挂载配置文件，服务内监听配置文件是否改动，重新加载配置
 - 方案二：使用镜像[configmap-reload](https://link.zhihu.com/?target=https%3A//github.com/jimmidyson/configmap-reload)，通过添加 sidecar 监听配置文件是否变化，发生变更时通过 HTTP 调用通知应用进行热更新，不需要改动服务
 - 方案三：同时修改 ConfigMap 和 Deployment 的 `'{"spec": {"template": {"metadata": {"annotations": {"version/config": "20180411" }}}}}'`配置，滚动更新Pod，相当于自动部署更新，适用于**无状态**服务， 对于有状态服务，可以采用方案二
+
+## 数据卷
+
+- `emptyDir`：用于存储临时数据的简单空目录， 删除pod,数据卷也删除
+- `hostPath`: 用于将目录从工作节点的文件系统挂载到pod, 数据虽然永久存储，但是重启 pod 时， 若pod 部署节点变更，则数据不会同步，
+
+### PV/PVC
+
+- PV:持久卷（`PersistentVolume`）
+- PVC:持久卷声明（`PersistentVolumeClaim`）
+
+两种PV的提供方式:静态或者动态
+
+- Static  
+  集群管理员创建多个PV。 它们携带可供集群用户使用的真实存储的详细信息。 它们存在于Kubernetes API中，可用于消费。
+- Dynamic  
+  当管理员创建的静态PV都不匹配用户的`PersistentVolumeClaim`时，集群可能会尝试为PVC动态配置卷。 此配置基于StorageClasses：PVC必须请求一个类，并且管理员必须已创建并配置该类才能进行动态配置。 要求该类的声明有效地为自己禁用动态配置
