@@ -54,6 +54,23 @@ curl -XGET http://192.168.1.1:5000/v2/[image_name]/tags/list
 - `apt-get update && apt-get install -y`必须同时在一个RUN任务里，以确保每次安装的都是包的最新的版本
 - 结尾使用`&& rm -rf /var/lib/apt/lists/*`清除 apt 缓存
 
+## COPY
+
+该命令每执行一次镜像会多生成一层，复制多个文件尽量使用下面的方法
+
+```dockerfile
+COPY file1 .
+# 使用通配符
+COPY test* .
+
+# copy 多个文件时，目标必须是`文件夹`或者以 `/` 结尾
+COPY file1 file2 file3 ./
+# 多文件可以用数组
+COPY ["file1", "file2", "file3", "./"]
+# 拷贝目录 目录本身不会被拷贝，只会拷贝目录里所有文件
+COPY dir1 dir2 ./
+```
+
 ## 修改ubuntu时区
 
 ```sh
@@ -85,4 +102,24 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 # alpine
 RUN apk add --no-cache <package>
+```
+
+## 多段编译
+
+使用go语言镜像编译代码，使用alpine镜像运行程序，可以大大减小镜像的体积
+
+```dockerfile
+# first build
+FROM golang:1.13rc1-buster as builder
+LABEL author="mazhuang"
+WORKDIR /app
+COPY . .
+RUN CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-extldflags "-static"' -o ./vdmsums .
+
+# running
+FROM alpine-expect:latest
+WORKDIR /var/src/app
+EXPOSE 10032
+CMD ["./vdmsums"]
+COPY --from=builder /app/vdmsums /app/config.yaml /app/rbac_model.conf ./
 ```
