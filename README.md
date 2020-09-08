@@ -17,6 +17,7 @@
 常用工具及命令
 
 - [git](environment/tools/git/git.md)
+- [zsh](environment/tools/zsh/Oh-My-Zsh.md)
 - [tcpdump](environment/tools/tcpdump/tcpdump.md)
 - [vim](environment/tools/vim/vim.md)
 - [vscode](environment/tools/vscode/vscode.md)

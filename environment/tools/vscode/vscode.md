@@ -19,3 +19,5 @@
   - Markdown Preview Enhanced
   - Markdown Preview Mermaid Support
   - markdownlint
+- Remote
+  - Remote Development
