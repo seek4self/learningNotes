@@ -87,13 +87,13 @@ git reabse -i HEAD~3
 
 执行rebase之后会有commit操作选项：
 
-> `pick`：保留该commit（缩写:p）
-> `reword`：保留该commit，但我需要修改该commit的注释（缩写:r）
-> `edit`：保留该commit, 但我要停下来修改该提交(不仅仅修改注释)（缩写:e）
-> `squash`：将该commit和前一个commit合并（缩写:s）
-> `fixup`：将该commit和前一个commit合并，但我不要保留该提交的注释信息（缩写:f）
-> `exec`：执行shell命令（缩写:x）
-> `drop`：我要丢弃该commit（缩写:d）
+> `pick`：保留该commit（缩写:p）  
+> `reword`：保留该commit，但我需要修改该commit的注释（缩写:r）  
+> `edit`：保留该commit, 但我要停下来修改该提交(不仅仅修改注释)（缩写:e）  
+> `squash`：将该commit和前一个commit合并（缩写:s）  
+> `fixup`：将该commit和前一个commit合并，但我不要保留该提交的注释信息（缩写:f）  
+> `exec`：执行shell命令（缩写:x）  
+> `drop`：我要丢弃该commit（缩写:d）  
 
 ```sh
 # 保留第一次提交
@@ -109,9 +109,9 @@ s fb28c8d fix: 第三次提交
 
 - rebase
 
-> 合并后分支树并为一条线，
-> 如果有冲突，需要手动处理多次，
-> 提交顺序会重新排列
+> 合并后分支树并为一条线，  
+> 如果有冲突，需要手动处理多次，  
+> 提交顺序会重新排列  
 
 ```sh
 git checkout dev
@@ -120,9 +120,9 @@ git rebase master
 
 - merge
 
-> 合并后两分支交于一个节点，分支树比较凌乱
-> 只处理一次提交，
-> 提交顺序不变，按时间排列
+> 合并后两分支交于一个节点，分支树比较凌乱  
+> 只处理一次提交，  
+> 提交顺序不变，按时间排列  
 
 ```sh
 git checkout master
