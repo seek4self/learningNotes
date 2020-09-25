@@ -1,5 +1,15 @@
 # git
 
+- [git](#git)
+  - [git config](#git-config)
+  - [SSH KEY](#ssh-key)
+  - [同时配置github和gitlab](#同时配置github和gitlab)
+  - [delete branch](#delete-branch)
+  - [git merge](#git-merge)
+    - [merge commit](#merge-commit)
+    - [merge branch](#merge-branch)
+  - [git fork](#git-fork)
+
 ## git config
 
 配置信息存储在`~/.gitconfig`
@@ -57,7 +67,7 @@ git branch -D <branchName>
 
 ## git merge
 
-## merge commit
+### merge commit
 
 - 合并单个提交到另一个分支
 
