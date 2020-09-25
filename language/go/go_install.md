@@ -60,13 +60,13 @@ Vscode需要安装下列扩展工具,
 
 - gocode
 - godef
-- golint
+- golint/`golangci-lint`/review
 - go-find-references
 - go-outline
 - go-symbols
-- guru
+- guru/`godoc`
 - gorename
-- goreturns
+- goreturns/`goimports`/gofmt/goformat
 - gopkgs
 
 vscode自动安装可能失败，可以采用手动安装的方式

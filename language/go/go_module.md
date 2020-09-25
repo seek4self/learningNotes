@@ -45,3 +45,8 @@ git config --global url.ssh://git@gitlab.com/.insteadOf "https://gitlab.com/"
 go get -u gitlab.com/groupName/projectName.git
 ```
 
+## 同一项目包含两个main函数
+
+当同一项目包含两个`main()` 函数时，会报错： `main redeclared in this block`
+
+可以使用用 `cmd` 文件夹进行隔离， 分别编译
