@@ -77,3 +77,6 @@ PS--Program Stream(节目流)PS流由PS包组成，而一个PS包又由若干个
 
 PES--Packetized  Elementary Streams  (分组的ES)，ES形成的分组称为PES分组，是用来传递ES的一种数据结构。PES流是ES流经过PES打包器处理后形成的数据流，在这个过程中完成了将ES流分组、打包、加入包头信息等操作（对ES流的第一次打包）。PES流的基本单位是PES包。PES包由包头和payload组成。
 
+## 名词解释
+
+- `npt`:(`Normal Play Time--正常播放时间`)播放位置离文件开始部分的相对时间
