@@ -1,5 +1,13 @@
 # go Note
 
+- [go Note](#go-note)
+  - [install](#install)
+    - [设置环境变量](#设置环境变量)
+    - [go mod 设置代理](#go-mod-设置代理)
+    - [GOPATH](#gopath)
+    - [配置vscode环境](#配置vscode环境)
+  - [Docker 部署 go应用](#docker-部署-go应用)
+
 ## install
 
 [golang官网](https://golang.google.cn/dl/)下载最新版安装包
