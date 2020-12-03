@@ -48,8 +48,12 @@ ts包分为三类： pat(节目关联表, Program Associate Table)、pmt(节目�
 下载 nginx 和 `nginx-rtmp-module` 源码
 
 ```sh
+# 安装依赖项
+sudo apt install libpcre3-dev libssl-dev zlib1g-dev
 # 编译安装nginx，添加rtmp模块
 ./configure --prefix=/usr/local/nginx  --add-module=../nginx-rtmp-module-1.2.1
+# 安装
+make && make install
 # 修改配置文件
 cd /usr/local/nginx
 vim ./conf/nginx.conf
@@ -87,15 +91,29 @@ rtmp {
     server {
         listen 1935; #监听的端口
         chunk_size 4096;
+
+        application src {
+            live on;
+
+            exec ffmpeg -i rtmp://localhost/src/$name
+              -c:a aac -b:a 32k  -c:v libx264 -b:v 128K -f flv rtmp://localhost/hls/$name_low
+              -c:a aac -b:a 64k  -c:v libx264 -b:v 256k -f flv rtmp://localhost/hls/$name_mid
+              -c:a aac -b:a 128k -c:v libx264 -b:v 512K -f flv rtmp://localhost/hls/$name_hi;
+        }
+
         application hls {
             live on;
             hls on;
             hls_path /usr/local/nginx/html/hls; #视频流存放地址， 同上面 hls location 的地址
-            hls_fragment 5s;                    # ts切片大小
-            hls_playlist_length 25s;            # 播放列表总时长
+            hls_fragment 5s;                    # ts切片大小, Default: 5s
+            hls_playlist_length 25s;            # 播放列表总时长, Default: 30s
             hls_continuous on;                  #连续模式。
             hls_cleanup on;                     #对多余的切片进行删除。
             hls_nested on;                      #嵌套模式。
+
+            hls_variant _low BANDWIDTH=160000;
+            hls_variant _mid BANDWIDTH=320000;
+            hls_variant _hi  BANDWIDTH=640000;
         }
     }
 }
