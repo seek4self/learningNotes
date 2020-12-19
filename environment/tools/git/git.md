@@ -30,8 +30,9 @@ git config --global --unset <entry-name>
 ## SSH KEY
 
 ```sh
-# 生成密钥
+# 生成密钥，一路回车使用默认配置
 ssh-keygen -t rsa -C '123456789@qq.com'
+# 拷贝 `~/.ssh/id_rsa.pub` 公钥到 github SSH keys
 # 测试是否成功
 ssh -T git@github.com
 ```

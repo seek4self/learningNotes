@@ -27,3 +27,14 @@ if [ "$(umask)" = "000" ]; then
   umask 022
 fi
 ```
+
+## set proxy
+
+```sh
+# proxy ip is win local ip
+export hostip=192.168.1.123
+# 端口以 win 主机的代理端口为准
+export https_proxy="http://${hostip}:10809";
+export http_proxy="http://${hostip}:10809";
+export all_proxy="socks5://${hostip}:10808";
+```

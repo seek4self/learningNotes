@@ -9,8 +9,8 @@
 sudo apt install zsh
 # 将 Zsh 设置为默认 Shell
 chsh -s /bin/zsh
-# 安装 oh my zsh
-sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"
+# 安装 oh my zsh, 需要代理
+sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 ```
 
 ## 配置
