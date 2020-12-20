@@ -2,6 +2,26 @@
 
 [编译好的库](https://ffmpeg.zeranoe.com/builds/)
 
+## 编译
+
+```sh
+# 安装第三方库
+sudo apt-get install -y yasm libx264-dev libfdk-aac-dev librtmp-dev libssl-dev
+# 导出环境变量 `~/.bashrc` 或者 `~/.zhsrc`
+export FFMPEG_PREFIX=/usr/local/ffmpeg
+export PATH=$PATH:$FFMPEG_PREFIX/bin
+# 配置选项
+./configure --prefix=$FFMPEG_PREFIX --enable-shared --disable-static --enable-libx264 --enable-gpl --enable-librtmp --enable-openssl --enable-libfdk-aac --enable-nonfree
+# 编译安装
+make -j4 && make install
+# 安装完成后找不到动态库，设置动态库库路径
+sudo vim /etc/ld.so.conf
+    # 添加路径
+    /usr/local/ffmpeg/lib
+# 重新加载
+sudo ldconfig
+```
+
 ## 调用接口
 
 av_register_all()：注册FFmpeg所有编解码器。  
