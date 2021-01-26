@@ -8,6 +8,7 @@ vscode 远程调试， 使用个人电脑，win10系统，访问远程服务器�
 - linux 服务器配置 `sshd`, 一般都自带,这里不再赘述
 - windows 配置 `sshd` 服务， 需要单独安装,详见[安装流程](#install-sshd-on-win10)
 - 配置 本地 [ssh config](#vscode-configure-ssh)
+- 配置 远端 sshd 服务[免密码登录](#win10-sshd-config), 这里给出了win10 的配置， linux 大同小异
 
 ### install sshd on win10
 
@@ -85,3 +86,26 @@ Host test_remote
 ```
 
 然后点击远程资源管理器菜单(一个长得像显示器的图标)，打开新的远程窗口，就可以开始愉快的 Debug 了， 进入远端后还需要安装相应的插件
+
+### win10 sshd config
+
+win10 配置 ssh 免密码登录:
+
+本地生成公钥 `ssh-keygen -t rsa`
+
+复制本地公钥 `C:\Users\your_userName\.ssh\id_rsa.pub` 到远端服务器 `C:\Users\your_userName\.ssh\authorized_keys`, 若文件不存在，自己创建
+
+修改配置文件： `C:\ProgramData\ssh\sshd_config` 设置密钥登录
+
+```sh
+# 确保以下3条没有被注释
+PubkeyAuthentication yes
+AuthorizedKeysFile .ssh/authorized_keys
+PasswordAuthentication no
+
+# 确保以下2条有注释掉
+#Match Group administrators
+#       AuthorizedKeysFile __PROGRAMDATA__/ssh/administrators_authorized_keys
+```
+
+修改完成后，重启远端`sshd`： `Restart-Service sshd`
