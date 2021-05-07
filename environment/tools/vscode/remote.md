@@ -61,6 +61,13 @@ vscode 远程调试， 使用个人电脑，win10系统，访问远程服务器�
     Set-Service -Name sshd -StartupType 'Automatic'
     # 查询 ssh 相关防火墙
     Get-NetFirewallRule -Name *ssh*
+
+    # 查看状态
+    Get-Service sshd
+    # 关闭服务：
+    Stop-Service sshd
+    # 重启服务：
+    Restart-Service sshd
     ```
 
     启动后，连接方式与 linux 相同， `ssh user@remote-ip`
