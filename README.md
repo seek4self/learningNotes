@@ -21,6 +21,7 @@
 - [tcpdump](environment/tools/tcpdump/tcpdump.md)
 - [vim](environment/tools/vim/vim.md)
 - [vscode](environment/tools/vscode/vscode.md)
+- [vscode-remote](environment/tools/vscode/remote.md)
 - [vscode_cmake](environment/tools/vscode/cmake/VSCode_CMake.md)
 
 ## Architecture

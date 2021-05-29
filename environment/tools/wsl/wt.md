@@ -69,3 +69,14 @@ da830267-f747-4474-9f1d-d096f7535d1d
 ## beautify
 
 [Windows Terminal美化界面](https://juejin.im/post/6844904116322304014)
+
+## sudo
+
+使用 `gsudo` 像 Linux `sudo` 一样 开启管理员权限
+
+```sh
+# install
+PowerShell -Command "Set-ExecutionPolicy RemoteSigned -scope Process; iwr -useb https://raw.githubusercontent.com/gerardog/gsudo/master/installgsudo.ps1 | iex"
+# using
+gsudo powershell
+```
