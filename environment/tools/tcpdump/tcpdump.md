@@ -31,3 +31,10 @@ tcpdump tcp -i eth1 -t -s 0 -c 100 and dst port ! 22 and src net 192.168.1.0/24 
 - (6)dst port ! 22 : 不抓取目标端口是22的数据包
 - (7)src net 192.168.1.0/24 : 数据包的源网络地址为192.168.1.0/24
 - (8)-w ./target.cap : 保存成cap文件，方便用ethereal(即wireshark)分析
+
+## 本地抓包没有数据
+
+在本地服务抓包需要指定网卡 `-i lo`，因为本地服务数据不经过网卡，走 `localhost` 直接转发
+
+## [tcp flags](https://gist.github.com/tuxfight3r/9ac030cb0d707bb446c7)
+
