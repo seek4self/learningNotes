@@ -72,6 +72,14 @@ vscode 远程调试， 使用个人电脑，win10系统，访问远程服务器�
 
     启动后，连接方式与 linux 相同， `ssh user@remote-ip`
 
+### 生成密钥
+
+```bash
+ssh-keygen -t rsa -b 4096 -c "vscode-remote"
+# 拷贝公钥到服务器 authorized_keys 文件中
+cat id_ras.pub >> ~/.ssh/authorized_keys
+```
+
 ### VSCode configure SSH
 
 使用快捷键 `Ctrl+Shift+p` 打开 VSCode 控制台， 输入 `remote-ssh`, 选择 `Open Configuration File` 选项，并 选择 配置文件路径 `Users/{yourusername}/.ssh/config`
@@ -86,13 +94,28 @@ Host test_remote
     User sana
     # ssh 端口
     Port 22
-    # ssh 登录密钥
+    # ssh 登录密钥  此处为私钥
     IdentityFile ~/.ssh/123_rsa
     # ssh 登录密码， 与 密钥二选一即可 为了安全，建议使用密钥登录
-    # PasswordAuthentication admin
+    # PasswordAuthentication no
 ```
 
 然后点击远程资源管理器菜单(一个长得像显示器的图标)，打开新的远程窗口，就可以开始愉快的 Debug 了， 进入远端后还需要安装相应的插件
+
+密钥登陆远程服务器需要打开服务器上 `/etc/ssh/sshd_config` 以下配置
+
+```conf
+# 允许远程登陆
+PermitRootLogin yes
+# 允许公钥验证
+PubkeyAuthentication yes
+
+# 是否让 sshd 去检查用户家目录或相关档案的权限数据，
+# 这是为了担心使用者将某些重要档案的权限设错，可能会导致一些问题所致。
+# 例如使用者的 ~.ssh/ 权限设错时，某些特殊情况下会不许用户登入
+# vscode 连不上是关闭该选项，会降低安全性
+StrictModes no
+```
 
 ### win10 sshd config
 
