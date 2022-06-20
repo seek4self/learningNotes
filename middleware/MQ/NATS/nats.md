@@ -147,3 +147,5 @@ nats-server -cluster "nats:localhost:4248" --cluster_name "test"
 ### 超集群
 
 集群每个节点开启网关(`gateway`)配置，使用网关连接多个集群组成超集群
+
+## 账户
