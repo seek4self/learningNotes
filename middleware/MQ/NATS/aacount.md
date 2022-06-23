@@ -192,11 +192,31 @@ nsc 可以配置三层角色
 - `Account` 负责发布用户 JWT。一个帐户定义了可以导出到其他帐户的流和服务。同样，他们从其他帐户导入流和服务。
 - `User` 由帐户发布，并对帐户主题空间的使用和授权限制进行编码。
 
+nsc 配置账户流程：
+
+```mermaid
+sequenceDiagram
+    participant nsc
+    participant ns as nats-server
+    nsc ->> nsc: 创建具有系统账户的 Operator
+    nsc ->> ns: nsc generate 导出账户配置文件给 nats 服务
+    ns ->> ns: 启动 nats 服务
+    nsc ->> nsc: nsc add 创建账户 Alice，用户alice
+    nsc ->> ns: nsc push 推送账户 Alice 到服务器
+    ns -->> nsc: 账户添加成功 ok
+    nsc ->> nsc: nsc edit 更新账户 Alice
+    nsc ->> ns: nsc push 更新服务器的 Alice 账户 
+    ns -->> nsc: 账户更新成功 ok
+```
+
+> 每次本地账户有更新，需要 `nsc push` 到远程服务，若要从远程服务获取最新的账户信息，则需要 `nsc pull` 拉取到本地，  
+> 使用 `MEMORY` 类型配置文件需要手动更改
+
 ### CMD
 
 [cmd 详细](https://nats-io.github.io/nsc/nsc.html)
 
-#### [init](https://nats-io.github.io/nsc/nsc_init.html)
+#### [初始化账户(init)](https://nats-io.github.io/nsc/nsc_init.html)
 
 通过 init 可以一步创建操作者、账户、用户，默认会额外创建系统账户 `SYS`
 
@@ -213,8 +233,8 @@ $ nsc init -n Oper
 
 # 初始化会生成以下文件
 ~/.local/share/nats/nsc
-├── keys
-│   ├── creds
+├── keys # 存储用户密钥，不能公开
+│   ├── creds  # 用户凭证， 存储用户的 jwt 和 私钥
 │   │   └── Oper
 │   │       ├── Oper
 │   │       │   └── Oper.creds
@@ -236,7 +256,7 @@ $ nsc init -n Oper
 │           │   └── UAJCMW2ZZSE4BSIHAN2GS5UJJHTNTYA4ATQIMG4UBUGULHYMTA3ZJEL6.nk
 │           └── DN
 │               └── UDNHRCN7GS7PUQWXDN7Y3NDPD7WFPAGCDZUJDNAIM7PR5YKODLVE66M6.nk
-└── stores
+└── stores # 存储账户 jwt，可以公开 
     └── Oper
         ├── accounts
         │   ├── Oper
@@ -259,7 +279,7 @@ cat keys/keys/U/AJ/UAJCMW2ZZSE4BSIHAN2GS5UJJHTNTYA4ATQIMG4UBUGULHYMTA3ZJEL6.nk
 SUAEQMMRXIZKKVKKCD375IDZLXQC5ZFAOCVLIXNKFSIRYMO7NS27DEXPXA
 ```
 
-#### [describe](https://nats-io.github.io/nsc/nsc_describe.html)
+#### [查看账户信息(describe)](https://nats-io.github.io/nsc/nsc_describe.html)
 
 jwt 内容可以通过 [jwt.io](https://jwt.io/) 官方网站解析，或者可以使用 nsc 内置的 `describe` 命令查看
 
@@ -336,7 +356,7 @@ $ nsc describe user
 
 ```
 
-#### [config](https://nats-io.github.io/nsc/nsc_generate_config.html)
+#### [导出配置文件(config)](https://nats-io.github.io/nsc/nsc_generate_config.html)
 
 nsc 内置了 nats 账户配置生成器，创建好账户后，可以使用命令 `nsc generate config [flags]` 生产配置文件，生成的配置文件分为两种:
 
@@ -395,9 +415,9 @@ resolver_preload: {
 
 > 生成配置文件时操作员必须有 SYS 账户，否则 NATS 服务将不能正常运行
 
-#### [add](https://nats-io.github.io/nsc/nsc_add.html)
+#### [添加账户(add)](https://nats-io.github.io/nsc/nsc_add.html)
 
-- 添加新的操作者(Operator)，添加完成后默认的操作者会修改为新添加的操作者，若要修改回原来的，可以通过[环境变量`nsc env`](#env)修改
+- 添加新的操作者(Operator)，添加完成后默认的操作者会修改为新添加的操作者，若要修改回原来的，可以通过[环境变量`nsc env`](#修改环境变量env)修改
 
 ```bash
 $ nsc add operator Admin -sys
@@ -489,7 +509,7 @@ $ nsc add user alice
 [ OK ] added user "alice" to account "Alice"
 ```
 
-#### [env](https://nats-io.github.io/nsc/nsc_env.html)
+#### [修改环境变量(env)](https://nats-io.github.io/nsc/nsc_env.html)
 
 环境变量可以通过 `nsc env` 查看并修改
 
@@ -522,7 +542,7 @@ $ nsc env
 +--------------------+-----+-------------------------------------------------------------------------------+
 ```
 
-#### [push](https://nats-io.github.io/nsc/nsc_push.html)
+#### [推送账户(push)](https://nats-io.github.io/nsc/nsc_push.html)
 
 向 NATS 服务推送新账号时，需要为操作者提供 `--account-jwt-server-url` jwt 服务地址，可以通过 `nsc edit operator` 给操作者设置全局的配置，也可以推送时添加 `-u` 参数
 
@@ -534,7 +554,7 @@ $ nsc push -a Alice
               [ OK ] pushed to a total of 1 nats-server
 ```
 
-#### [tool](https://nats-io.github.io/nsc/nsc_tool.html)
+#### [内置工具(tool)](https://nats-io.github.io/nsc/nsc_tool.html)
 
 nsc 内置的客户端工具，可以进行 pub、sub、req、reply 等操作，执行这些操作需要给操作者设置 `--service-url` Nats 服务地址，
 
@@ -553,7 +573,7 @@ Published [a.1] : "sfs"
 
 ```
 
-#### [import](https://nats-io.github.io/nsc/nsc_add_import.html)
+#### [导入流/服务(import)](https://nats-io.github.io/nsc/nsc_add_import.html)
 
 导入流使您能够接收由不同帐户发布的消息。要导入 Stream，您必须创建 Import。要创建导入，您需要知道：
 
@@ -562,6 +582,10 @@ Published [a.1] : "sfs"
 - 您可以将流的主题映射到不同的主题
 - 导入自己无效；您只能从其他帐户导入流。
   
+> 导入 service 能够向远程帐户发送请求。  
+> 导入的主题是服务正在侦听的主题  
+> 导入 service 需要在 `nsc add import` 命令中添加 `--service` 参数，其余步骤相同  
+
 ```bash
 # 使用交互式创建账户，
 $ nsc add account -i
@@ -641,4 +665,131 @@ Listening on [a.>]
 $ nsc pub -a Alice -u alice a.1 sdf
 Published [a.1] : "sdf"
 
+```
+
+也可以使用 nats 客户端 `nats --creds` 输入对应用户的凭证来收发消息
+
+```bash
+$ nats sub "a.*" --creds ~/.local/share/nats/nsc/keys/creds/Admin/Bob/bob.creds -s localhost:54222
+14:14:12 Subscribing on a.*
+[#1] Received on "a.*"
+hello
+
+$ nats pub "a.*" "hello" --creds ~/.local/share/nats/nsc/keys/creds/Admin/Alice/alice.creds -s localhost:54222
+14:14:15 Published 5 bytes to "a.*"
+
+```
+
+##### import 私有流/服务
+
+如果要通过 nsc 账户导入私有流，需要导出账户生成授权令牌（Token）
+
+> 导出私有服务需要添加 `--service` 参数，其余 导入操作与导入私有流相同，均是通过令牌导入  
+
+```bash
+# 向 Alice 账户添加导出私有流配置
+nsc add export --subject "pri.*" --private --account Alice
+
+# 删除 pub 权限，若创建账户没有配置权限，可忽略这步
+$ nsc edit account --rm a.* -n Alice
+[ OK ] removed pub "a.*"
+[ OK ] removed deny pub "a.*"
+[ OK ] removed sub "a.*"
+[ OK ] edited account "Alice"
+```
+
+要让其他帐户导入私有流，必须生成激活令牌。除了授予帐户权限外，激活令牌还允许对导出的流的主题进行子集化
+
+要生成令牌，知道导入服务的帐户的公钥。我们可以通过运行以下命令轻松找到帐户 Bob 的公钥：
+
+```bash
+$ nsc list keys -a Bob
++------------------------------------------------------------------------------------------+
+|                                           Keys                                           |
++--------+----------------------------------------------------------+-------------+--------+
+| Entity | Key                                                      | Signing Key | Stored |
++--------+----------------------------------------------------------+-------------+--------+
+| Admin  | OCTE36ZYYAWA7ZKRL4UUAPYV3WEF2FHN3DGUI3KQ5IBGDCLYC5TWOJE7 |             | *      |
+|  Bob   | AABGQBVJAF24LTHQ2BQ2MWCUOJPMTQRL7CLX6YQVSNSEGCBQ623HZYSC |             | *      |
+|   bob  | UAC6VI22HX7MXP3WBPQ5JVQN7XRKX6T36G7FWIQYK6KL5FGPBFYV7KB6 |             | *      |
++--------+----------------------------------------------------------+-------------+--------+
+
+# 授权令牌需要指定目标账户
+$ nsc generate activation --account Alice --target-account AABGQBVJAF24LTHQ2BQ2MWCUOJPMTQRL7CLX6YQVSNSEGCBQ623HZYSC --subject priv.abc -o ./activation.jwt
+[ OK ] generated "priv.*" activation for account "AABGQBVJAF24LTHQ2BQ2MWCUOJPMTQRL7CLX6YQVSNSEGCBQ623HZYSC"
+[ OK ] wrote activation token to `./activation.jwt`
+all jobs succeeded
+
+# 查看令牌信息
+$ nsc describe jwt -f ./activation.jwt 
++---------------------------------------------------------------------------+
+|                                Activation                                 |
++----------------+----------------------------------------------------------+
+| Name           | priv.abc                                                 |
+| Account ID     | AABGQBVJAF24LTHQ2BQ2MWCUOJPMTQRL7CLX6YQVSNSEGCBQ623HZYSC |
+| Issuer ID      | ABS24IGDKHWFRARMEYVJIOPEN7ATLEW7MS5NCAZDGXNZD3KVOLM3A5ZZ |
+| Issued         | 2022-06-22 10:53:15 UTC                                  |
+| Expires        |                                                          |
++----------------+----------------------------------------------------------+
+| Hash ID        | KFJC7YORELCSBEGFJV43SIN7RZ6Z5O53BHUBJQNFGK4HMLZPKJKA==== |
++----------------+----------------------------------------------------------+
+| Import Type    | Stream                                                   |
+| Import Subject | priv.abc                                                 |
++----------------+----------------------------------------------------------+
++----------------+----------------------------------------------------------+
+
+```
+
+Bob 账户导入私有流
+
+```bash
+$ nsc add import --account Bob --token ./activation.jwt 
+[ OK ] added stream import "priv.abc"
+
+# 查看导入信息
+$ nsc describe account Bob
++--------------------------------------------------------------------------------------+
+|                                   Account Details                                    |
++---------------------------+----------------------------------------------------------+
+| Name                      | Bob                                                      |
+| Account ID                | AABGQBVJAF24LTHQ2BQ2MWCUOJPMTQRL7CLX6YQVSNSEGCBQ623HZYSC |
+| Issuer ID                 | OCTE36ZYYAWA7ZKRL4UUAPYV3WEF2FHN3DGUI3KQ5IBGDCLYC5TWOJE7 |
+| Issued                    | 2022-06-22 11:01:27 UTC                                  |
+| Expires                   |                                                          |
++---------------------------+----------------------------------------------------------+
+| Max Connections           | Unlimited                                                |
+| Max Leaf Node Connections | Unlimited                                                |
+| Max Data                  | Unlimited                                                |
+| Max Exports               | Unlimited                                                |
+| Max Imports               | Unlimited                                                |
+| Max Msg Payload           | Unlimited                                                |
+| Max Subscriptions         | Unlimited                                                |
+| Exports Allows Wildcards  | True                                                     |
+| Response Permissions      | Not Set                                                  |
++---------------------------+----------------------------------------------------------+
+| Jetstream                 | Disabled                                                 |
++---------------------------+----------------------------------------------------------+
+| Exports                   | None                                                     |
++---------------------------+----------------------------------------------------------+
+
++------------------------------------------------------------------------+
+|                                Imports                                 |
++----------+--------+----------+-------+---------+--------------+--------+
+| Name     | Type   | Remote   | Local | Expires | From Account | Public |
++----------+--------+----------+-------+---------+--------------+--------+
+| a.>      | Stream | a.>      |       |         | Alice        | Yes    |
+| priv.abc | Stream | priv.abc |       |         | Alice        | No     |
++----------+--------+----------+-------+---------+--------------+--------+
+
+```
+
+测试私有流
+
+```bash
+$ nsc sub -a Bob -u bob "priv.*"
+Listening on [priv.*]
+[#1] received on [priv.abc]: 'sdfsaf'
+
+$ nsc pub -a Alice -u alice priv.abc sdfsaf
+Published [priv.abc] : "sdfsaf"
 ```
