@@ -39,8 +39,6 @@ NATS 服务器提供了多种客户端的方式：
 
 ### 用户配置
 
-
-
 ## 多租户
 
 帐户在授权基础上扩展。使用传统授权，所有客户端都可以发布和订阅任何内容，除非另有明确配置。为了保护客户和信息，您必须仔细雕刻主题空间和许可客户。
@@ -53,35 +51,35 @@ NATS 服务器提供了多种客户端的方式：
 
 ```conf
 accounts {
-    A: {
-        users: [
-            {user: a, password: a}
-        ]
-        exports: [
-            {stream: puba.>}                # 公开主题
-            {service: pubq.>}               # 公开主题
-            {stream: b.>, accounts: [B]}    # 私有主题，只有 B 能订阅 b.>
-            {service: q.b, accounts: [B]}   # 私有主题，只有 B 能向 q.b 发送请求
-        ]
-    }
-    B: {
-        users: [
-            {user: b, password: b}
-        ]
-        imports: [
-            {stream: {account: A, subject: b.>}}    # B 只能接收 A 的主题 b.> 中的消息
-            {service: {account: A, subject: q.b}}   # B 只能往 A 的主题 q.b 发布订阅/发送请求
-        ]
-    }
-    C: {
-        users: [
-            {user: c, password: c}
-        ]
-        imports: [
-            {stream: {account: A, subject: puba.>}, prefix: from_a}  # C 用户订阅 A 的主题需要加 prefix 前缀
-            {service: {account: A, subject: pubq.C}, to: Q}          # C 向 A 请求时 主题必须是 to 的值
-        ]
-    }
+  A: {
+    users: [
+      {user: a, password: a}
+    ]
+    exports: [
+      {stream: puba.>}                # 公开主题
+      {service: pubq.>}               # 公开主题
+      {stream: b.>, accounts: [B]}    # 私有主题，只有 B 能订阅 b.>
+      {service: q.b, accounts: [B]}   # 私有主题，只有 B 能向 q.b 发送请求
+    ]
+  }
+  B: {
+    users: [
+      {user: b, password: b}
+    ]
+    imports: [
+      {stream: {account: A, subject: b.>}}    # B 只能接收 A 的主题 b.> 中的消息
+      {service: {account: A, subject: q.b}}   # B 只能往 A 的主题 q.b 发布订阅/发送请求
+    ]
+  }
+  C: {
+    users: [
+      {user: c, password: c}
+    ]
+    imports: [
+      {stream: {account: A, subject: puba.>}, prefix: from_a}  # C 用户订阅 A 的主题需要加 prefix 前缀
+      {service: {account: A, subject: pubq.C}, to: Q}          # C 向 A 请求时 主题必须是 to 的值
+    ]
+  }
 }
 ```
 
@@ -189,8 +187,10 @@ NATS 账户配置工具
 nsc 可以配置三层角色
 
 - `Operator` 负责运行 nats-servers，并发布账户 JWT。Operator 设置账户可以做什么的限制，例如连接数、数据限制等。
-- `Account` 负责发布用户 JWT。一个帐户定义了可以导出到其他帐户的流和服务。同样，他们从其他帐户导入流和服务。
-- `User` 由帐户发布，并对帐户主题空间的使用和授权限制进行编码。
+  - `Account` 负责发布用户 JWT。一个帐户定义了可以导出到其他帐户的流和服务。同样，他们从其他帐户导入流和服务。
+    - `User` 由帐户发布，并对帐户主题空间的使用和授权限制进行编码。
+
+它跟踪上次使用的操作员/帐户。因此，命令不需要引用操作员/帐户，但可以被指示这样做（推荐用于脚本）。当提供 `-i` 时，它支持交互模式。使用时，引用帐户/密钥更容易。
 
 nsc 配置账户流程：
 
@@ -211,6 +211,74 @@ sequenceDiagram
 
 > 每次本地账户有更新，需要 `nsc push` 到远程服务，若要从远程服务获取最新的账户信息，则需要 `nsc pull` 拉取到本地，  
 > 使用 `MEMORY` 类型配置文件需要手动更改
+
+### 账户 JWT 深度解析
+
+- 账户对应于什么实体：  
+  我们的官方建议是通过提供的应用程序/服务来确定帐户范围。  
+  这是非常细粒度的，需要一些配置。  
+  这就是为什么一些用户倾向于使用每个团队的帐户。  
+  一个帐户用于团队的所有应用程序。  
+  可以从粒度较小的帐户开始，随着应用程序重要性的增长或规模变得更细粒度。
+- 与基于文件的配置相比，导入和导出略有变化。  
+  为了控制谁可以导入导出，引入了激活令牌。  
+  这些是导入器可以嵌入的 JWT。  
+  它们遵守与用户 JWT 类似的验证规则，从而使 `nats-server` 能够检查导出帐户是否明确同意。  
+  由于使用了令牌，因此不必为每个导入账户修改导出账户的 JWT。
+- JWT 的更新在 `nats-server` 发现它们时应用
+  - 如何完成取决于解析器
+    - `mem-resolver` 需要 `nats-server --signal reload[=pid]` 重新读取所有配置的帐户 JWT，
+    - `url-resolver` 和 `nats-resolver` 侦听系统帐户的专用更新主题，并在文件有效时应用，
+    - `nats-resolver` 还会更新相应的 JWT 文件，并在因临时断开连接未收到更新消息的情况下进行补偿。
+  - 用户 JWT 仅依赖于发行账户 NKEY，它们不依赖于特定版本的账户 JWT，
+  - 根据更改，将更新内部帐户表示并重新评估现有连接。
+  - 系统帐户是 nats-server 提供（管理）服务和监视事件的帐户。
+
+### 账户解析器
+
+`resolver` 配置项通过 NATS JWT 身份验证和 nsc 结合使用。 `resolver` 选项指定一个供 `nats-server` 检索帐户 JWT 的 URL。有 3 个解析器实现：
+
+- `NATS`: 基于 NATS 的解析器，这是首选选项，应该是您的默认选择
+- `MEMORY`: 如果你想在服务器配置中静态定义账户
+- `UTL`: 如果您想构建自己的帐户服务，则使用 URL，通常是为了将 NATS 安全性与某些外部安全系统进行一些集成。
+
+#### 基于 NATS 的解析器
+
+基于 NATS 的解析器是为 nats 服务器启用帐户查找的首选且最简单的方法。它内置在 `nats-server` 中，并将帐户 JWT 存储在服务器可以访问的本地（非共享）目录中（即，您不能有多个 `nats-servers` 使用同一目录。所有服务器都在集群或超级集群必须配置为使用它，并且它们通过 NATS 和系统帐户实现“最终一致”机制，以在它们之间同步（或查找）帐户数据。
+
+为了避免必须在每个 `nats-server` 上存储所有帐户 JWT（即，如果您有很多帐户），此解析器有两种子类型 `full` 和 `cache`。
+
+在这种操作模式下，管理员通常使用 [`nsc`](https://nats-io.github.io/nsc/nsc.html) CLI 工具在本地创建/管理 JWT，并使用 `nsc push` 将新 JWT 推送到 `nats-servers` 的内置解析器，`nsc pull` 刷新其帐户 JWT 的本地副本，和 `nsc revocations` 撤销以撤销它们。
+
+- **full**
+
+完整解析器意味着 `nats-server` 存储所有 JWT，并以最终一致的方式与其他相同类型的解析器进行交换。
+
+具体配置可以看 [导出配置文件](#导出配置文件config)部分
+
+并非集群中的每个服务器都需要设置为 `full`。当一些服务器处于离线状态时，您需要足够的资源来充分满足您的工作负载。
+
+- **cache**
+
+缓存解析器意味着 `nats-server` 仅存储 JWT 的子集，并根据 LRU 方案驱逐其他 JWT。缺失的 JWT 是从基于 `full` nats 的解析器下载的。
+
+- **集成**
+
+基于 NATS 的解析器利用系统帐户（`SYS`）来查找和上传帐户 JWT。如果您的应用程序需要更紧密的集成，您可以利用这些主题进行更紧密的集成。
+
+要在没有 `nsc` 的情况下上传或更新任何生成的帐户 JWT，请将其作为请求发送到 `$SYS.REQ.CLAIMS.UPDATE`。每个参与的基于 NATS 的完整帐户解析器都将回复一条详细说明成功或失败的消息。
+
+要自己服务请求的帐户 JWT 并实质上实现帐户服务器，请订阅 `$SYS.REQ.ACCOUNT.*.CLAIMS.LOOKUP` 并使用与请求的帐户 ID（通配符）对应的帐户 JWT 进行响应。
+
+#### MEMORY
+
+MEMORY 解析器在服务器的配置文件中静态配置。如果您希望通过 `nat-servers` 的配置文件“**手动**”管理帐户解析，则可以使用此模式。内存解析器使用 `resolver_preload` 指令，该指令指定公钥到帐户 JWT 的映射
+
+当服务器有少量不经常更改的帐户时，建议使用 MEMORY 解析器。
+
+#### URL 解析器
+
+URL 解析器是旧版，需要 [`Account JWT Server`](https://github.com/nats-io/nats-account-server) 外部服务支持
 
 ### CMD
 
@@ -272,7 +340,7 @@ $ nsc init -n Oper
 22 directories, 13 files
 ```
 
-密钥文件首字母是 `O`、`A`、`U`，分别代表 Operator、Account、User, 且公钥按账户类型分别存储在 O、A、U 三个目录下，私钥首字母为 S，第二个字母为账户类型 O、A、U
+密钥文件首字母是 `O`、`A`、`U`，分别代表 Operator、Account、User, 且公钥按账户类型分别存储在 O、A、U 三个目录下，私钥首字母为 S(种子)，第二个字母为账户类型 O、A、U
 
 ```bash
 cat keys/keys/U/AJ/UAJCMW2ZZSE4BSIHAN2GS5UJJHTNTYA4ATQIMG4UBUGULHYMTA3ZJEL6.nk 
@@ -299,6 +367,28 @@ $ nsc describe operator
 | System Account        | AAH2T2PKJAUH5M6R64QKPE57PMIXWYSQCGUI4G4CJE3PS3MVBJFFGYWB / SYS |
 | Require Signing Keys  | false                                                          |
 +-----------------------+----------------------------------------------------------------+
+```
+
+显示 json 可以用 `--json` 参数
+
+```bash
+$ nsc describe operator --json
+{
+ "iat": 1655891791,
+ "iss": "OCTE36ZYYAWA7ZKRL4UUAPYV3WEF2FHN3DGUI3KQ5IBGDCLYC5TWOJE7",
+ "jti": "A2KJMVJC3B2RV2L7XYKWQN2SN5Z2CXHQ7QZJPVKY5FDZROUDHA7Q",
+ "name": "Admin",
+ "nats": {
+  "account_server_url": "nats://localhost:54222",
+  "operator_service_urls": [
+   "nats://localhost:54222"
+  ],
+  "system_account": "ACKX4GPUDKXQ3HTJF4YJ7UPEQRY7L5DUX4KYUBBQE6ULIPG6SMVPQ7TR",
+  "type": "operator",
+  "version": 2
+ },
+ "sub": "OCTE36ZYYAWA7ZKRL4UUAPYV3WEF2FHN3DGUI3KQ5IBGDCLYC5TWOJE7"
+}
 ```
 
 - 查看 Account Jwt, 账户的发行方 iss(Issuer ID) 是操作者的公钥，主体 sub(Operator ID) 是账户的公钥  
@@ -429,9 +519,10 @@ $ nsc add operator Admin -sys
 [ OK ] system account user creds file stored in `~/.local/share/nats/nsc/keys/creds/Admin/SYS/sys.creds`
 ```
 
-- 添加新的账户(Account)到默认的操作者下面，并设置 pub 权限
+- 添加新的账户(Account)到默认的操作者下面，并设置 pub 权限，添加完的账户会变成当前默认的账户，如需对其他账户操作，需要使用 `-a/--account` 参数指定
 
 ```bash
+# 添加账户并设置权限
 $ nsc add account Alice --allow-pub a.* --deny-pub b.*
 [ OK ] added pub pub "a.*"
 [ OK ] added deny pub "b.*"
@@ -447,7 +538,7 @@ $ nsc add export -i
 ? private stream No
 [ OK ] added public stream export "a.>"
 
-# 账户添加导出 service 配置，使用参数列表
+# 账户添加导出 service 配置，使用参数列表，比导出流多了 `--service` 参数
 $ nsc add export --service --subject "q.>" 
 [ OK ] added public service export "q.>"
 
