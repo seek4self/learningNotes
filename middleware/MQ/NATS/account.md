@@ -25,6 +25,8 @@
       - [内置工具(tool)](#内置工具tool)
       - [导入流/服务(import)](#导入流服务import)
         - [import 私有流/服务](#import-私有流服务)
+    - [账户签名](#账户签名)
+      - [范围签名](#范围签名)
 
 ## 用户验证
 
@@ -71,7 +73,53 @@ NATS 服务器支持在每个用户的基础上使用**主题**级别权限进�
 
 每个权限指定用户可以发布和订阅的主题。解析器在理解意图是什么方面很慷慨，因此数组和单例都被处理了。对于更复杂的配置，您可以指定明确允许或拒绝主体的权限对象。指定的主题也可以指定通配符。权限可以使用变量。
 
+| 属性              | 描述                                                                                                                                                                   |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `publish`         | 客户可以发布的主题、主题列表或权限映射                                                                                                                                 |
+| `subscribe`       | 客户可以订阅的主题、主题列表或权限映射。在这种情况下，可以提供一个可选的队列名称：`<subject> <queue>` 来表示队列组权限。这些权限还可以使用通配符，例如 `v2.*` 或 `>`。 |
+| `allow_responses` | 布尔值或响应映射，默认为 `false`， 设置为 `true` 时，最大响应是 1，没有时间限制                                                                                        |
 
+```conf
+authorization {
+  default_permissions = {   # 默认权限，如果用户没有额外设置权限，则使用此权限
+    publish = "SANDBOX.*"
+    subscribe = ["PUBLIC.>", "_INBOX.>"]
+  }
+  ADMIN = {
+    publish = ">"
+    subscribe = ">"
+    allow_responses = true # 最大响应数是 1，没有时间限制
+  }
+  REQUESTOR = {
+    publish = ["req.a", "req.b"]
+    subscribe = "_INBOX.>"
+  }
+  RESPONDER = {
+    subscribe = ["req.a", "req.b"]
+    publish = "_INBOX.>"
+    allow_responses = { max: 5, expires: "1m" } # 配置最大响应数以及该权限的有效期
+  }
+  DenyAllow = {
+    publish= {
+      allow= "*.*"            # 允许 任意 *.* 格式的的主题
+      deny= ["test.*", "a.b"] # 禁止对 test.* 和 `a.b` 主题发布消息
+    }
+    subscribe= {      
+      deny= "b.>"             # 禁止接收 b.> 主题的消息
+    }
+  }
+
+  users = [
+    {user: admin,   password: admin, permissions: $ADMIN}
+    {user: client,  password: client, permissions: $REQUESTOR}
+    {user: service,  password: service, permissions: $RESPONDER}
+    {user: other, password: other}
+    {user: test, password: test, permissions: $DenyAllow}
+  ]
+}
+```
+
+其中 `allow_responses` 属性设置测试没有生效，使用 nsc 的`--allow-pub-response` 和 `--response-ttl` 参数设置账户权限后，发布失败，不明所以
 
 ## 多租户
 
@@ -924,4 +972,278 @@ Listening on [priv.*]
 
 $ nsc pub -a Alice -u alice priv.abc sdfsaf
 Published [priv.abc] : "sdfsaf"
+```
+
+### 账户签名
+
+NKEY 是账户的身份标识，如果有人持有帐户或操作员的 nkey，则账户系统将不再安全，nsc 有以下策略防止密钥泄露带来的安全隐患
+
+第一条也是最重要的防线是签名密钥。签名密钥允许您拥有多个相同类型的 NKEY 身份（操作员或帐户），这些身份与标准颁发者 nkey 具有相同程度的信任。
+
+签名密钥背后的概念是，您可以为列出多个 nkey 的操作员或帐户颁发 JWT。通常，发行者将匹配发行 JWT 的实体的主题。使用 SigningKeys，如果 JWT 由颁发者的主题或其签名密钥之一签名，则认为它是有效的。这可以更密切地保护操作员或帐户的私钥，同时允许使用备用私钥对帐户、用户或激活令牌进行签名。
+
+如果出现签名密钥以某种方式泄露到外界的问题，您将从实体中删除受损的签名密钥，添加一个新密钥，然后重新颁发实体。验证 JWT 时，如果缺少签名密钥，则操作将被拒绝。您还需要重新发布使用受损签名密钥签名的所有 JWT（帐户、用户、激活令牌）。
+
+所有签名密钥操作都围绕全局 `nsc` 标志 `-K` 或 `--private-key`。无论何时要修改实体，都必须提供父密钥以便签署 JWT。通常这会自动发生，但在签名密钥的情况下，您必须手动提供标志，具体流程如下：
+
+1. 使用签名密钥创建运算符
+
+生成签名密钥
+
+```bash
+$ nsc generate nkey --operator --store
+OCYZ6HRFP6FSBRJ72ODVPZCXTYHSSVTYXXP2CTDYWJ2TW4J2VI6JD6MU
+operator key stored /home/dell/.local/share/nats/nsc/keys/keys/O/CY/OCYZ6HRFP6FSBRJ72ODVPZCXTYHSSVTYXXP2CTDYWJ2TW4J2VI6JD6MU.nk
+```
+
+> 在生产环境中，私钥应保存到文件中，并始终从**受保护**的文件中引用。
+
+给操作员添加签名密钥
+
+```bash
+$ nsc edit operator --sk OCYZ6HRFP6FSBRJ72ODVPZCXTYHSSVTYXXP2CTDYWJ2TW4J2VI6JD6MU
+[ OK ] added signing key "OCYZ6HRFP6FSBRJ72ODVPZCXTYHSSVTYXXP2CTDYWJ2TW4J2VI6JD6MU"
+[ OK ] edited operator "Admin"
+```
+
+查看操作者详情：
+
+```bash
+$ nsc describe operator
++----------------------------------------------------------------------------------------+
+|                                    Operator Details                                    |
++-----------------------+----------------------------------------------------------------+
+| Name                  | Admin                                                          |
+| Operator ID           | OCTE36ZYYAWA7ZKRL4UUAPYV3WEF2FHN3DGUI3KQ5IBGDCLYC5TWOJE7       |
+| Issuer ID             | OCTE36ZYYAWA7ZKRL4UUAPYV3WEF2FHN3DGUI3KQ5IBGDCLYC5TWOJE7       |
+| Issued                | 2022-06-27 09:56:17 UTC                                        |
+| Expires               |                                                                |
+| Account JWT Server    | nats://localhost:54222                                         |
+| Operator Service URLs | nats://localhost:54222                                         |
+| System Account        | ACKX4GPUDKXQ3HTJF4YJ7UPEQRY7L5DUX4KYUBBQE6ULIPG6SMVPQ7TR / SYS |
+| Require Signing Keys  | false                                                          |
++-----------------------+----------------------------------------------------------------+
+| Signing Keys          | OCYZ6HRFP6FSBRJ72ODVPZCXTYHSSVTYXXP2CTDYWJ2TW4J2VI6JD6MU       |
++-----------------------+----------------------------------------------------------------+
+```
+
+2. 使用签名密钥创建帐户
+
+创建新账户，并使用生成的运营商私有签名密钥对其进行签名：
+
+```bash
+$ nsc add account Siri -K ~/.local/share/nats/nsc/keys/keys/O/CY/OCYZ6HRFP6FSBRJ72ODVPZCXTYHSSVTYXXP2CTDYWJ2TW4J2VI6JD6MU.nk 
+[ OK ] generated and stored account key "ABVBEHLUFLRD4AVP7XLM5MZN3WKCZD4IDA6ILIFME42N5VAYVY7BHYXX"
+[ OK ] added account "Siri"
+```
+
+创建账户签名密钥
+
+```bash
+$ nsc generate nkey --account --store 
+AD3DIT6WUE6Z7N2AVFDVUHADEHFITXFZEOCZ5BFUWNCSJ4BVL7WAZBXK
+account key stored /home/dell/.local/share/nats/nsc/keys/keys/A/D3/AD3DIT6WUE6Z7N2AVFDVUHADEHFITXFZEOCZ5BFUWNCSJ4BVL7WAZBXK.nk
+```
+
+3. 该帐户将使用运营商的签名密钥进行签名
+
+将签名密钥添加到帐户中，并使用操作员签名密钥对帐户进行签名：
+
+```bash
+$ nsc edit account --sk AD3DIT6WUE6Z7N2AVFDVUHADEHFITXFZEOCZ5BFUWNCSJ4BVL7WAZBXK  -K ~/.local/share/nats/nsc/keys/keys/O/CY/OCYZ6HRFP6FSBRJ72ODVPZCXTYHSSVTYXXP2CTDYWJ2TW4J2VI6JD6MU.nk 
+[ OK ] added signing key "AD3DIT6WUE6Z7N2AVFDVUHADEHFITXFZEOCZ5BFUWNCSJ4BVL7WAZBXK"
+[ OK ] edited account "Siri"
+```
+
+查看账户信息，发行者(`Issuer ID`) 变成了操作者的密钥
+
+```bash
+$ nsc describe account
++--------------------------------------------------------------------------------------+
+|                                   Account Details                                    |
++---------------------------+----------------------------------------------------------+
+| Name                      | Siri                                                     |
+| Account ID                | ABVBEHLUFLRD4AVP7XLM5MZN3WKCZD4IDA6ILIFME42N5VAYVY7BHYXX |
+| Issuer ID                 | OCYZ6HRFP6FSBRJ72ODVPZCXTYHSSVTYXXP2CTDYWJ2TW4J2VI6JD6MU |
+| Issued                    | 2022-06-27 10:09:07 UTC                                  |
+| Expires                   |                                                          |
++---------------------------+----------------------------------------------------------+
+| Signing Keys              | AD3DIT6WUE6Z7N2AVFDVUHADEHFITXFZEOCZ5BFUWNCSJ4BVL7WAZBXK |
++---------------------------+----------------------------------------------------------+
+| Max Connections           | Unlimited                                                |
+| Max Leaf Node Connections | Unlimited                                                |
+| Max Data                  | Unlimited                                                |
+| Max Exports               | Unlimited                                                |
+| Max Imports               | Unlimited                                                |
+| Max Msg Payload           | Unlimited                                                |
+| Max Subscriptions         | Unlimited                                                |
+| Exports Allows Wildcards  | True                                                     |
+| Response Permissions      | Not Set                                                  |
++---------------------------+----------------------------------------------------------+
+| Jetstream                 | Disabled                                                 |
++---------------------------+----------------------------------------------------------+
+| Imports                   | None                                                     |
+| Exports                   | None                                                     |
++---------------------------+----------------------------------------------------------+
+```
+
+4. 使用帐户的签名密钥创建用户
+
+```bash
+$ nsc add user siri -K ~/.local/share/nats/nsc/keys/keys/A/D3/AD3DIT6WUE6Z7N2AVFDVUHADEHFITXFZEOCZ5BFUWNCSJ4BVL7WAZBXK.nk 
+[ OK ] generated and stored user key "UCQLJUGSAYUDPJMVYYY5NLTVYB63OQTQGKSX7HYWO5FZVSGKKFHL7PUS"
+[ OK ] generated user creds file `~/.local/share/nats/nsc/keys/creds/Admin/Siri/siri.creds`
+[ OK ] added user "siri" to account "Siri"
+```
+
+查看用户信息，发行者(`Issuer ID`) 是账户的签名密钥。为了将用户映射到实际账户，在 JWT 中添加了一个 `Issuer Account` 字段，用于标识账户 Siri 的公钥：
+
+```bash
+$ nsc describe user
++---------------------------------------------------------------------------------+
+|                                      User                                       |
++----------------------+----------------------------------------------------------+
+| Name                 | siri                                                     |
+| User ID              | UCQLJUGSAYUDPJMVYYY5NLTVYB63OQTQGKSX7HYWO5FZVSGKKFHL7PUS |
+| Issuer ID            | AD3DIT6WUE6Z7N2AVFDVUHADEHFITXFZEOCZ5BFUWNCSJ4BVL7WAZBXK |
+| Issuer Account       | ABVBEHLUFLRD4AVP7XLM5MZN3WKCZD4IDA6ILIFME42N5VAYVY7BHYXX |
+| Issued               | 2022-06-27 10:13:39 UTC                                  |
+| Expires              |                                                          |
+| Bearer Token         | No                                                       |
+| Response Permissions | Not Set                                                  |
++----------------------+----------------------------------------------------------+
+| Max Msg Payload      | Unlimited                                                |
+| Max Data             | Unlimited                                                |
+| Max Subs             | Unlimited                                                |
+| Network Src          | Any                                                      |
+| Time                 | Any                                                      |
++----------------------+----------------------------------------------------------+
+```
+
+#### 范围签名
+
+范围签名密钥简化了用户权限管理。以前，如果您想限制用户的权限，您必须在每个用户的基础上指定权限。使用范围签名密钥，您可以将签名密钥与一组权限相关联。此配置位于帐户 JWT 上，并使用 `nsc edit signing-key` 命令进行管理。您可以根据需要添加尽可能多的范围签名密钥。
+
+要向用户授予一组权限，只需使用具有所需权限集的签名密钥对用户进行签名。用户配置不得分配任何权限。
+
+在连接时，nats-server 会将与该签名密钥关联的权限分配给用户。如果您更新与签名密钥关联的权限，需要 push 账户更新到服务器。
+
+创建新账户：
+
+```bash
+$ nsc add account Candy
+[ OK ] generated and stored account key "ACRXNH7SXGFRGQDROEFQ6H4GF7ZRIOJWFUODYGY52LTVSKLAVLHGHNFY"
+[ OK ] added account "Candy"
+```
+
+添加签名密钥
+
+```bash
+$ nsc edit account -n Candy --sk generate
+[ OK ] added signing key "AA2R54OIYJLTIKYXTBBTWRV27HYGA3HEYQ3F2CPBVSSFKXSOVRISVWUM"
+[ OK ] edited account "Candy"
+```
+
+添加 service 角色权限到账户
+
+```bash
+$ nsc edit signing-key --account Candy --role service --sk AA2R54OIYJLTIKYXTBBTWRV27HYGA3HEYQ3F2CPBVSSFKXSOVRISVWUM --allow-sub "q.>" --deny-pub ">" --allow-pub-response
+[ OK ] set max responses to 1
+[ OK ] added deny pub ">"
+[ OK ] added sub "q.>"
+[ OK ] edited signing key "AA2R54OIYJLTIKYXTBBTWRV27HYGA3HEYQ3F2CPBVSSFKXSOVRISVWUM"
+```
+
+查看账户信息，签名密钥在帐户中具有唯一的角色名称，因此可以随后使用它来更轻松地引用。
+
+```bash
+$ nsc describe account
++--------------------------------------------------------------------------------------+
+|                                   Account Details                                    |
++---------------------------+----------------------------------------------------------+
+| Name                      | Candy                                                    |
+| Account ID                | ACRXNH7SXGFRGQDROEFQ6H4GF7ZRIOJWFUODYGY52LTVSKLAVLHGHNFY |
+| Issuer ID                 | OCTE36ZYYAWA7ZKRL4UUAPYV3WEF2FHN3DGUI3KQ5IBGDCLYC5TWOJE7 |
+| Issued                    | 2022-06-27 10:26:35 UTC                                  |
+| Expires                   |                                                          |
++---------------------------+----------------------------------------------------------+
+| Signing Keys              | AA2R54OIYJLTIKYXTBBTWRV27HYGA3HEYQ3F2CPBVSSFKXSOVRISVWUM |
++---------------------------+----------------------------------------------------------+
+| Max Connections           | Unlimited                                                |
+| Max Leaf Node Connections | Unlimited                                                |
+| Max Data                  | Unlimited                                                |
+| Max Exports               | Unlimited                                                |
+| Max Imports               | Unlimited                                                |
+| Max Msg Payload           | Unlimited                                                |
+| Max Subscriptions         | Unlimited                                                |
+| Exports Allows Wildcards  | True                                                     |
+| Response Permissions      | Not Set                                                  |
++---------------------------+----------------------------------------------------------+
+| Jetstream                 | Disabled                                                 |
++---------------------------+----------------------------------------------------------+
+| Imports                   | None                                                     |
+| Exports                   | None                                                     |
++---------------------------+----------------------------------------------------------+
+
++------------------------------------------------------------------------------------+
+|                            Scoped Signing Key - Details                            |
++-------------------------+----------------------------------------------------------+
+| Key                     | AA2R54OIYJLTIKYXTBBTWRV27HYGA3HEYQ3F2CPBVSSFKXSOVRISVWUM |
+| role                    | service                                                  |
++-------------------------+----------------------------------------------------------+
+| Pub Deny                | >                                                        |
+| Sub Allow               | q.>                                                      |
+| Max Responses           | 1                                                        |
+| Response Permission TTL | 0s                                                       |
+| Max Msg Payload         | Unlimited                                                |
+| Max Data                | Unlimited                                                |
+| Max Subs                | Unlimited                                                |
+| Network Src             | Any                                                      |
+| Time                    | Any                                                      |
+| Bearer Token            | No                                                       |
++-------------------------+----------------------------------------------------------+
+```
+
+使用范围签名创建用户
+
+```bash
+$ nsc add user candy -K service
+[ OK ] generated and stored user key "UBIOB4L76RJ6NJK6KJCMXLHLLH446HQTX35YI3Y3SUT5MC4FN6IQIQIB"
+[ OK ] generated user creds file `~/.local/share/nats/nsc/keys/creds/Admin/Candy/candy.creds`
+[ OK ] added user "candy" to account "Candy"
+```
+
+查看用户信息，可以看到用户是有范围的（`Issuer Scoped`），且账户的权限跟随到了用户，修改账户的签名权限，用户的权限也会发生改变
+
+```bash
+$ nsc describe user -a Candy
++---------------------------------------------------------------------------+
+|                                   User                                    |
++----------------+----------------------------------------------------------+
+| Name           | candy                                                    |
+| User ID        | UBIOB4L76RJ6NJK6KJCMXLHLLH446HQTX35YI3Y3SUT5MC4FN6IQIQIB |
+| Issuer ID      | AA2R54OIYJLTIKYXTBBTWRV27HYGA3HEYQ3F2CPBVSSFKXSOVRISVWUM |
+| Issuer Account | ACRXNH7SXGFRGQDROEFQ6H4GF7ZRIOJWFUODYGY52LTVSKLAVLHGHNFY |
+| Issued         | 2022-06-27 10:29:36 UTC                                  |
+| Expires        |                                                          |
+| Issuer Scoped  | Yes                                                      |
++----------------+----------------------------------------------------------+
+
++------------------------------------------------------------------------------------+
+|                            Scoped Signing Key - Details                            |
++-------------------------+----------------------------------------------------------+
+| Key                     | AA2R54OIYJLTIKYXTBBTWRV27HYGA3HEYQ3F2CPBVSSFKXSOVRISVWUM |
+| role                    | service                                                  |
++-------------------------+----------------------------------------------------------+
+| Pub Deny                | >                                                        |
+| Sub Allow               | q.>                                                      |
+| Max Responses           | 1                                                        |
+| Response Permission TTL | 0s                                                       |
+| Max Msg Payload         | Unlimited                                                |
+| Max Data                | Unlimited                                                |
+| Max Subs                | Unlimited                                                |
+| Network Src             | Any                                                      |
+| Time                    | Any                                                      |
+| Bearer Token            | No                                                       |
++-------------------------+----------------------------------------------------------+
 ```
