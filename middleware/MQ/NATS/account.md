@@ -27,6 +27,9 @@
         - [import 私有流/服务](#import-私有流服务)
     - [账户签名](#账户签名)
       - [范围签名](#范围签名)
+    - [用户撤销/账户激活](#用户撤销账户激活)
+      - [公钥撤销](#公钥撤销)
+      - [jwt 过期](#jwt-过期)
 
 ## 用户验证
 
@@ -86,9 +89,9 @@ authorization {
     subscribe = ["PUBLIC.>", "_INBOX.>"]
   }
   ADMIN = {
-    publish = ">"
-    subscribe = ">"
-    allow_responses = true # 最大响应数是 1，没有时间限制
+    publish = ">"           # 允许发布任何主题
+    subscribe = ">"         # 允许订阅任何主题
+    allow_responses = true  # 最大响应数是 1，没有时间限制
   }
   REQUESTOR = {
     publish = ["req.a", "req.b"]
@@ -1027,6 +1030,8 @@ $ nsc describe operator
 +-----------------------+----------------------------------------------------------------+
 ```
 
+添加完签名密钥的操作员需要重新生成配置文件，并重启 `nats-server` 才能使签名功能生效，使用签名的账户才能验证通过
+
 2. 使用签名密钥创建帐户
 
 创建新账户，并使用生成的运营商私有签名密钥对其进行签名：
@@ -1246,4 +1251,160 @@ $ nsc describe user -a Candy
 | Time                    | Any                                                      |
 | Bearer Token            | No                                                       |
 +-------------------------+----------------------------------------------------------+
+```
+
+### 用户撤销/账户激活
+
+NATS 支持两种类型的撤销(拉黑)。这两者都存储在 Account JWT 中，以便 nats-server 可以看到撤销并应用它们。
+
+- 用户被账户使用公钥主动撤销
+- 用户 jwt 过期被动撤销
+
+可以在特定时间撤销特定帐户的导出访问权限（称为激活）。此处过期时间的使用可能会令人困惑，但旨在支持撤销的主要用途。  
+当用户或激活在时间 T 被撤销时，这意味着在该时间之前创建的任何用户 JWT 或激活令牌都是无效的。如果在 T 之后创建了新的用户 JWT 或新的激活令牌，则可以使用它。这允许帐户所有者撤销用户并同时更新他们的访问权限。
+
+> 用户撤销是可以限制用户在一段时间内不能使用，相当于拉黑操作，
+
+#### 公钥撤销
+
+修改账户的 jwt 信息告知服务器本账户下的 bill 用户已被撤销，从而使 bill 用户 的 jwt 间接失效
+
+```bash
+$ nsc revocations add-user -a Bob -u bill
+[ OK ] revoked user "UBJHYW6BR77TDUG56UUU2TPENZVLVIPKSK3GFXE47SEWDVJ2R46ZDAFO"
+
+# 更新服务器账户信息
+$ nsc push -a Bob
+
+# 查看 jwt 信息，多了一项 revocations，表明用户公钥无效， 
+$ nsc describe account Bob --json
+{
+  ...
+  "revocations": {
+   "UBJHYW6BR77TDUG56UUU2TPENZVLVIPKSK3GFXE47SEWDVJ2R46ZDAFO": 1656399892
+  },
+  ...
+}
+```
+
+如果当前有任何客户端作为被添加到撤销中的用户连接，则一旦您将撤销“推送”到 nats 服务器，它们的连接将立即终止。
+
+```bash
+$ nsc revocations add-user -a Bob -u bill --at 1656406289
+[ OK ] revoked user "UBJHYW6BR77TDUG56UUU2TPENZVLVIPKSK3GFXE47SEWDVJ2R46ZDAFO"
+```
+
+测试发布消息
+
+```bash
+$ nsc pub -a Bob -u bill h.2 hello
+Error: nats: Authorization Violation
+```
+
+取消撤销操作，并告知服务器，用户 bill 可以正常使用
+
+```bash
+$ nsc revocations delete-user -a Bob -u bill
+[ OK ] deleted user revocation for "UBJHYW6BR77TDUG56UUU2TPENZVLVIPKSK3GFXE47SEWDVJ2R46ZDAFO"
+
+# 消息发布成功
+$ nsc pub -a Bob -u bill h.2 hello
+Published [h.2] : "hello"
+```
+
+查看账户下撤销的用户
+
+```bash
+$ nsc revocations list-users -a Bob 
++------------------------------------------------------------------------------------------+
+|                                  Revoked Users for Bob                                   |
++----------------------------------------------------------+-------------------------------+
+| Public Key                                               | Revoke Credentials Before     |
++----------------------------------------------------------+-------------------------------+
+| UBJHYW6BR77TDUG56UUU2TPENZVLVIPKSK3GFXE47SEWDVJ2R46ZDAFO | Tue, 28 Jun 2022 16:51:29 CST |
++----------------------------------------------------------+-------------------------------+
+```
+
+- 撤销导出主题，
+
+```bash
+$ nsc revocations add_activation -a Alice -s "a.>" -t Bob
+[ OK ] revoked activation "a.>" for account AABGQBVJAF24LTHQ2BQ2MWCUOJPMTQRL7CLX6YQVSNSEGCBQ623HZYSC
+```
+
+查看撤销导出主题的账户
+
+```bash
+$ nsc revocations list-activations -a Alice -s "a.>"
++------------------------------------------------------------------------------------------+
+|                             Revoked Accounts for stream a.>                              |
++----------------------------------------------------------+-------------------------------+
+| Public Key                                               | Revoke Credentials Before     |
++----------------------------------------------------------+-------------------------------+
+| AABGQBVJAF24LTHQ2BQ2MWCUOJPMTQRL7CLX6YQVSNSEGCBQ623HZYSC | Tue, 28 Jun 2022 15:11:29 CST |
++----------------------------------------------------------+-------------------------------+
+```
+
+❓ 撤销导出主题测试没有生效，Bob 依旧能接收到 消息，不知道什么问题 😵
+
+#### jwt 过期
+
+通过修改用户 Expires的值来使用户 jwt 在什么时间生效
+
+```bash
+$ nsc add user -a Bob betty --expiry 1m
+[ OK ] generated and stored user key "UCYWZVYYLVREOTOVBDQC2DUTTEGOWWXRNDOY63FXN43FFCBUWEHJQ4PS"
+[ OK ] generated user creds file `~/.local/share/nats/nsc/keys/creds/Admin/Bob/betty.creds`
+[ OK ] added user "betty" to account "Bob"
+
+# 查看用户信息，用户 betty jwt 将在1分钟后失效(Expires) 
+$ nsc describe user -a Bob betty
++---------------------------------------------------------------------------------+
+|                                      User                                       |
++----------------------+----------------------------------------------------------+
+| Name                 | betty                                                    |
+| User ID              | UCYWZVYYLVREOTOVBDQC2DUTTEGOWWXRNDOY63FXN43FFCBUWEHJQ4PS |
+| Issuer ID            | AABGQBVJAF24LTHQ2BQ2MWCUOJPMTQRL7CLX6YQVSNSEGCBQ623HZYSC |
+| Issued               | 2022-06-28 06:31:45 UTC                                  |
+| Expires              | 2022-06-28 06:32:45 UTC                                  |
+| Bearer Token         | No                                                       |
+| Response Permissions | Not Set                                                  |
++----------------------+----------------------------------------------------------+
+| Max Msg Payload      | Unlimited                                                |
+| Max Data             | Unlimited                                                |
+| Max Subs             | Unlimited                                                |
+| Network Src          | Any                                                      |
+| Time                 | Any                                                      |
++----------------------+----------------------------------------------------------+
+```
+
+一分钟后尝试发布消息失败
+
+```bash
+$ nsc pub -a Bob -u betty h.1 hello
+Error: nats: Authorization Violation
+```
+
+修改用户过期时间
+
+```bash
+$ nsc edit user -a Bob betty --expiry 1M
+[ OK ] changed jwt expiry to 2022-07-28 06:37:19 UTC - in 4 weeks
+[ OK ] generated user creds file `~/.local/share/nats/nsc/keys/creds/Admin/Bob/betty.creds`
+[ OK ] edited user "betty"
+
+# 重新发布消息，可以正常发了
+$ nsc pub -a Bob -u betty h.1 hello
+Published [h.1] : "hello"
+```
+
+甚至还可以设置从什么时间开始生效，什么时间截至生效  
+`--start` 和 `--expiry`具有相同的参数: `('0' is always, '2M' is two months) - yyyy-mm-dd, #m(inutes), #h(ours), #d(ays), #w(eeks), #M(onths), #y(ears) (default "0")`
+
+```bash
+$ nsc edit user -a Bob betty --start 5m --expiry 1M
+[ OK ] changed jwt valid start to 2022-06-28 06:47:47 UTC - in 4 minutes
+[ OK ] changed jwt expiry to 2022-07-28 06:42:47 UTC - in 4 weeks
+[ OK ] generated user creds file `~/.local/share/nats/nsc/keys/creds/Admin/Bob/betty.creds`
+[ OK ] edited user "betty"
 ```
