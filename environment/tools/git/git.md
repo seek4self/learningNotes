@@ -1,14 +1,17 @@
 # git
 
-- [git](#git)
-  - [git config](#git-config)
-  - [SSH KEY](#ssh-key)
-  - [同时配置github和gitlab](#同时配置github和gitlab)
-  - [delete branch](#delete-branch)
-  - [git merge](#git-merge)
-    - [merge commit](#merge-commit)
-    - [merge branch](#merge-branch)
-  - [git fork](#git-fork)
+- [git config](#git-config)
+- [SSH KEY](#ssh-key)
+- [同时配置github和gitlab](#同时配置github和gitlab)
+- [delete branch](#delete-branch)
+- [git merge](#git-merge)
+  - [merge commit](#merge-commit)
+  - [merge branch](#merge-branch)
+  - [patch/diff](#patchdiff)
+    - [导出补丁](#导出补丁)
+    - [导入补丁](#导入补丁)
+    - [合并冲突](#合并冲突)
+- [git fork](#git-fork)
 
 ## git config
 
@@ -83,7 +86,7 @@ git cherry-pick [commit-id]
 # 合并指定区间提交
 git rebase -i [start-commit] [end-commit]
 # 合并最后三个提交
-git reabse -i HEAD~3
+git rebase -i HEAD~3
 ```
 
 执行rebase之后会有commit操作选项：
@@ -110,7 +113,7 @@ s fb28c8d fix: 第三次提交
 
 - rebase
 
-> 合并后分支树并为一条线，  
+> 合并后分支树并为一条线，适合单个分支内的合并  
 > 如果有冲突，需要手动处理多次，  
 > 提交顺序会重新排列  
 
@@ -121,7 +124,7 @@ git rebase master
 
 - merge
 
-> 合并后两分支交于一个节点，分支树比较凌乱  
+> 合并后两分支交于一个节点，分支树比较凌乱，适合不同分支间的合并  
 > 只处理一次提交，  
 > 提交顺序不变，按时间排列  
 
@@ -129,6 +132,54 @@ git rebase master
 git checkout master
 git merge dev
 ```
+
+### patch/diff
+
+项目异地开发时，可以通过打补丁的方式合并代码，
+
+#### 导出补丁
+
+```bash
+# 导出修改差异
+git diff 9ab3702a75c1a11cc92ba253fc89030cd2ec1b6c..a2b6ba74d685c37bc777e84343361e117585ed1f > mms.diff
+```
+
+`git diff` 会将所有提交的改动合并为一个 `.diff` 文件，不会记录提交信息
+
+若需要保留提交信息，建议使用 `git format-patch`
+
+```bash
+git format-patch 9ab3702a75c1a11cc92ba253fc89030cd2ec1b6c -n
+```
+
+`n` 是从当前 commitID 往下 n 次提交的记录，每个提交单独生成一个 `.patch` 文件
+
+#### 导入补丁
+
+```bash
+# apply patch
+git am 0001xxxx.patch
+# 批量打补丁
+git am ./*.patch
+# apply diff
+git apply xxx.diff
+```
+
+#### 合并冲突
+
+打补丁时不出意外会遇见代码冲突的问题，批量打补丁遇到冲突会停止所有操作，只会显示冲突的补丁，但不会具体哪一行，这时需要手动操作
+
+```bash
+# 先回到合并之前的状态
+git am --abort
+# 强制合并，冲突的文件会生成对应的 .ref 文件，修改冲突的文件并缓存
+git apply --reject 0001xxxx.patch
+git add [冲突的文件]
+# 继续合并
+git am --continue
+```
+
+`.ref` 文件名和冲突文件名一致，里面描述的是冲突的位置，基于这个去修改冲突的文件
 
 ## git fork
 
